@@ -9,12 +9,16 @@ services:
     healthCheckPath: /
     autoDeploy: true
     
-    # Environment Variables (will be set in Render dashboard)
+    # Environment Variables
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NEXT_PUBLIC_NEWS_API_KEY
+        value: 7f669cabd21b4d648c1493728928761b
+      - key: NEXT_PUBLIC_USE_OPENSTREETMAP
+        value: true
       - key: NEXT_PUBLIC_APP_URL
-        sync: false # Set to your Render URL
+        generateValue: true # Auto-generates from Render URL
         
     # Build configuration
     buildFilter:

@@ -26,8 +26,10 @@ import { toast } from 'sonner'
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-export default function HomePage() {
+// Prevent server-side rendering
+function PageContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>('general')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [country, setCountry] = useState<string>('us')

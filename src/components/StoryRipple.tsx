@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface RippleProps {
@@ -39,9 +39,17 @@ interface NewStoryPulseProps {
 }
 
 export function NewStoryPulse({ trigger, position }: NewStoryPulseProps) {
+  const [windowWidth, setWindowWidth] = useState(0)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setWindowWidth(window.innerWidth)
+    }
+  }, [])
+
   if (!trigger) return null
 
-  const x = position?.x || window.innerWidth / 2
+  const x = position?.x || windowWidth / 2
   const y = position?.y || 100
 
   return (

@@ -47,7 +47,7 @@ export function useNewsData({
       }
 
       // Check for new articles
-      const newArticleIds = new Set(data.articles.map((a: NewsArticle) => a.id))
+      const newArticleIds = new Set<string>(data.articles.map((a: NewsArticle) => a.id))
       const hasNewArticles = data.articles.some(
         (article: NewsArticle) => !previousArticlesRef.current.has(article.id)
       )

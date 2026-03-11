@@ -49,9 +49,10 @@ export function useNotifications() {
         const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
         
         if (vapidPublicKey) {
+          const uint8Array = urlBase64ToUint8Array(vapidPublicKey)
           sub = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+            applicationServerKey: uint8Array.buffer as ArrayBuffer,
           })
         }
       }
@@ -90,7 +91,6 @@ export function useNotifications() {
           registration.showNotification(title, {
             icon: '/icon-192.png',
             badge: '/icon-192.png',
-            vibrate: [200, 100, 200],
             ...options,
           })
         })

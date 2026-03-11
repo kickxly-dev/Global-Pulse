@@ -28,8 +28,7 @@ import { toast } from 'sonner'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// Prevent server-side rendering
-function PageContent() {
+export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('general')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [country, setCountry] = useState<string>('us')

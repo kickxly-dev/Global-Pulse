@@ -1,0 +1,20 @@
+# PWA Icon Placeholder
+
+This file is a placeholder. Replace it with actual PNG icon files:
+
+- icon-192.png (192x192 pixels)
+- icon-512.png (512x512 pixels)
+
+## How to Create Icons
+
+1. Design a 512x512px icon with your logo/design
+2. Use an online tool like https://realfavicongenerator.net/
+3. Or use image editing software to resize to 192x192 and 512x512
+4. Save as PNG format
+5. Replace this file with the actual icons
+
+## Recommended Design
+- Dark background (#0a0a0a)
+- Globe or pulse wave symbol
+- Cyber blue (#00d4ff) accent color
+- Simple and recognizable at small sizes

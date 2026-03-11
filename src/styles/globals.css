@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --cyber-black: #0a0a0a;
+    --cyber-dark: #0f0f0f;
+    --cyber-red: #ff0040;
+    --cyber-blue: #00d4ff;
+    --cyber-purple: #bd00ff;
+    --cyber-green: #00ff88;
+    --cyber-yellow: #ffd700;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-cyber-darker text-gray-100;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-cyber-dark;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-cyber-blue/30 hover:bg-cyber-blue/50;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    @apply bg-cyber-blue/30 text-white;
+  }
+}
+
+@layer components {
+  .glow-text {
+    text-shadow: 
+      0 0 10px currentColor,
+      0 0 20px currentColor,
+      0 0 30px currentColor;
+  }
+
+  .cyber-border {
+    @apply border border-cyber-blue/20 hover:border-cyber-blue/50 transition-colors duration-300;
+  }
+
+  .cyber-card {
+    @apply bg-cyber-dark/50 backdrop-blur-md border border-cyber-blue/20 rounded-lg p-4 hover:border-cyber-blue/40 transition-all duration-300;
+  }
+
+  .cyber-button {
+    @apply px-4 py-2 bg-cyber-blue/10 border border-cyber-blue/50 rounded-md text-cyber-blue hover:bg-cyber-blue/20 hover:border-cyber-blue hover:shadow-glow-blue transition-all duration-300;
+  }
+
+  .cyber-button-red {
+    @apply px-4 py-2 bg-cyber-red/10 border border-cyber-red/50 rounded-md text-cyber-red hover:bg-cyber-red/20 hover:border-cyber-red hover:shadow-glow-red transition-all duration-300;
+  }
+
+  .news-card {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(15,15,15,0.9) 0%, rgba(10,10,10,0.95) 100%);
+  }
+
+  .news-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-red), var(--cyber-purple));
+    border-radius: 8px;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+  }
+
+  .news-card:hover::before {
+    opacity: 0.5;
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  .pulse-dot {
+    @apply relative inline-flex h-3 w-3;
+  }
+
+  .pulse-dot::before {
+    content: '';
+    @apply absolute inline-flex h-full w-full rounded-full bg-cyber-red opacity-75;
+    animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  .pulse-dot::after {
+    content: '';
+    @apply absolute inline-flex rounded-full h-3 w-3 bg-cyber-red;
+  }
+
+  .cyber-grid {
+    background-image: 
+      linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .scan-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyber-blue), transparent);
+    animation: scan 3s linear infinite;
+    pointer-events: none;
+  }
+
+  .breaking-news-alert {
+    @apply relative overflow-hidden bg-gradient-to-r from-cyber-red/20 to-transparent border-l-4 border-cyber-red;
+    animation: alert-pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .map-marker-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes ping {
+    75%, 100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+
+  .leaflet-container {
+    @apply rounded-lg border border-cyber-blue/20;
+    background: var(--cyber-dark) !important;
+  }
+
+  .leaflet-tile {
+    filter: brightness(0.7) contrast(1.2) hue-rotate(180deg) invert(1);
+  }
+
+  .notification-badge {
+    @apply absolute -top-1 -right-1 h-3 w-3 bg-cyber-red rounded-full;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-cyber-blue to-cyber-purple;
+  }
+
+  .animate-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  .backdrop-blur-cyber {
+    backdrop-filter: blur(12px) saturate(150%);
+  }
+}

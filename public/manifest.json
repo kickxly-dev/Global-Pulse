@@ -1,0 +1,42 @@
+{
+  "name": "Global Pulse - Hear the World",
+  "short_name": "Global Pulse",
+  "description": "Live global news platform delivering verified, up-to-the-minute stories and alerts from around the world",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["news", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Latest News",
+      "short_name": "Latest",
+      "description": "View latest news stories",
+      "url": "/?category=general",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Technology",
+      "short_name": "Tech",
+      "description": "Technology news",
+      "url": "/?category=technology",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

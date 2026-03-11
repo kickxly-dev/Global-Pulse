@@ -1,0 +1,42 @@
+services:
+  # Next.js Web Service
+  - type: web
+    name: global-pulse
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    
+    # Environment Variables (will be set in Render dashboard)
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false # Set to your Render URL
+        
+    # Build configuration
+    buildFilter:
+      paths:
+        - src/**
+        - public/**
+        - package*.json
+        - next.config.js
+        - tailwind.config.js
+        - tsconfig.json
+        - postcss.config.js
+        
+  # Static File Service (for assets)
+  - type: web
+    name: global-pulse-assets
+    env: static
+    plan: free
+    buildCommand: echo "No build needed"
+    staticPublishPath: ./public
+    autoDeploy: true
+    
+# Custom Domain (optional)
+domains:
+  - name: your-domain.com # Replace with your domain
+    service: global-pulse

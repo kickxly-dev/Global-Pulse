@@ -24,6 +24,9 @@ import { useTheme } from '@/hooks/useTheme'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 
+// Disable static generation for this page
+export const dynamic = 'force-dynamic'
+
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('general')
   const [searchQuery, setSearchQuery] = useState<string>('')

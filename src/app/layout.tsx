@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 import { Toaster } from 'sonner'
@@ -9,12 +9,17 @@ export const metadata: Metadata = {
   title: 'Global Pulse - Hear the World',
   description: 'Live global news platform delivering verified, up-to-the-minute stories and alerts from around the world',
   manifest: '/manifest.json',
-  themeColor: '#0a0a0a',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
   icons: {
     icon: '/icon-192.png',
     apple: '/icon-192.png',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#0a0a0a',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({

@@ -127,7 +127,6 @@ export default function EnhancedNewsCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
       className={`cyber-card ${getSentimentColor(analysis.sentiment)} relative overflow-hidden`}
-      onMouseEnter={() => onRead?.(article)}
     >
       {/* Reading Progress Bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-cyber-dark/50">

@@ -236,37 +236,58 @@ export function SimpleThemeToggle({ currentTheme, onThemeChange }: SimpleThemeTo
   const applyTheme = (theme: string) => {
     debugLog('THEME', 'Applying theme', { theme })
     const root = document.documentElement
+    const body = document.body
     
     // Remove all theme classes
     root.classList.remove('theme-cyber', 'theme-dark', 'theme-light', 'dark', 'light')
-    document.body.classList.remove('theme-cyber', 'theme-dark', 'theme-light', 'dark', 'light')
+    body.classList.remove('theme-cyber', 'theme-dark', 'theme-light', 'dark', 'light')
     
-    // Apply new theme
+    // Force remove any inline styles
+    body.style.cssText = ''
+    
+    // Apply new theme with !important to override Tailwind
     if (theme === 'light') {
       root.classList.add('light', 'theme-light')
-      document.body.classList.add('light', 'theme-light')
-      document.body.style.backgroundColor = '#f3f4f6'
-      document.body.style.color = '#1f2937'
+      body.classList.add('light', 'theme-light')
+      body.style.setProperty('background-color', '#ffffff', 'important')
+      body.style.setProperty('color', '#000000', 'important')
       root.style.setProperty('--cyber-blue', '#2563eb')
       root.style.setProperty('--cyber-purple', '#7c3aed')
+      root.style.setProperty('--cyber-dark', '#f3f4f6')
     } else if (theme === 'dark') {
       root.classList.add('dark', 'theme-dark')
-      document.body.classList.add('dark', 'theme-dark')
-      document.body.style.backgroundColor = '#111827'
-      document.body.style.color = '#f3f4f6'
+      body.classList.add('dark', 'theme-dark')
+      body.style.setProperty('background-color', '#1f2937', 'important')
+      body.style.setProperty('color', '#f3f4f6', 'important')
       root.style.setProperty('--cyber-blue', '#3b82f6')
       root.style.setProperty('--cyber-purple', '#8b5cf6')
+      root.style.setProperty('--cyber-dark', '#111827')
     } else {
+      // Cyber theme
       root.classList.add('cyber', 'theme-cyber', 'dark')
-      document.body.classList.add('cyber', 'theme-cyber', 'dark')
-      document.body.style.backgroundColor = '#0a0a0a'
-      document.body.style.color = '#00ff88'
+      body.classList.add('cyber', 'theme-cyber', 'dark')
+      body.style.setProperty('background-color', '#0a0a0a', 'important')
+      body.style.setProperty('color', '#00ff88', 'important')
       root.style.setProperty('--cyber-blue', '#00f0ff')
       root.style.setProperty('--cyber-purple', '#bf00ff')
+      root.style.setProperty('--cyber-dark', '#0a0a0a')
+    }
+    
+    // Also try to update main app container if it exists
+    const mainContainer = document.querySelector('main') || document.querySelector('#__next') || document.querySelector('.min-h-screen')
+    if (mainContainer) {
+      (mainContainer as HTMLElement).style.backgroundColor = theme === 'light' ? '#ffffff' : theme === 'dark' ? '#1f2937' : '#0a0a0a'
     }
     
     localStorage.setItem('theme', theme)
     onThemeChange(theme)
+    
+    // Show visual feedback
+    const toast = document.createElement('div')
+    toast.textContent = `${theme.toUpperCase()} theme applied`
+    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#00f0ff;color:#000;padding:8px 16px;border-radius:8px;z-index:9999;font-weight:bold;'
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 2000)
   }
 
   return (

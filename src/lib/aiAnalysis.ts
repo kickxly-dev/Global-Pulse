@@ -1,4 +1,5 @@
 import { NewsArticle } from '@/types/news'
+import { getOpenAIService } from './openai'
 
 export type Sentiment = 'positive' | 'negative' | 'neutral'
 export type Mood = 'happy' | 'sad' | 'angry' | 'fearful' | 'neutral' | 'exciting'
@@ -25,10 +26,55 @@ const POSITIVE_WORDS = ['success', 'win', 'achieve', 'breakthrough', 'improve', 
 const NEGATIVE_WORDS = ['fail', 'loss', 'crash', 'crisis', 'decline', 'fall', 'negative', 'disaster', 'threat', 'danger', 'war', 'conflict', 'attack', 'death', 'injury', 'collapse', 'recession', 'pandemic']
 const NEUTRAL_WORDS = ['announce', 'report', 'update', 'release', 'statement', 'reveal', 'plan', 'consider', 'discuss', 'review']
 
+// Check if OpenAI is configured
+const isOpenAIEnabled = (): boolean => {
+  return typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_OPENAI_API_KEY
+}
+
+export async function analyzeArticleAsync(article: NewsArticle): Promise<AnalysisResult> {
+  const text = `${article.title} ${article.description || ''} ${article.content || ''}`.toLowerCase()
+  
+  // Use OpenAI if configured
+  if (isOpenAIEnabled()) {
+    try {
+      const openai = getOpenAIService(process.env.NEXT_PUBLIC_OPENAI_API_KEY)
+      
+      const [summary, sentimentResult, keywords] = await Promise.all([
+        openai.generateSummary(article),
+        openai.analyzeSentiment(text),
+        openai.generateKeywords(text),
+      ])
+      
+      const mood = analyzeMood(text, sentimentResult.sentiment)
+      const wordCount = text.split(/\s+/).length
+      const readTime = Math.ceil(wordCount / 200)
+      const topics = extractTopics(text)
+      const entities = extractEntities(text)
+      
+      return {
+        summary,
+        sentiment: sentimentResult.sentiment,
+        mood,
+        confidence: sentimentResult.confidence,
+        readTime,
+        keywords,
+        topics,
+        entities
+      }
+    } catch (error) {
+      console.error('OpenAI analysis failed, falling back to local:', error)
+      // Fall through to local analysis
+    }
+  }
+  
+  // Local analysis (fallback)
+  return analyzeArticle(article)
+}
+
 export function analyzeArticle(article: NewsArticle): AnalysisResult {
   const text = `${article.title} ${article.description || ''} ${article.content || ''}`.toLowerCase()
   
-  // Generate smart summary (simulate AI summary)
+  // Generate smart summary
   const summary = generateSummary(article)
   
   // Analyze sentiment

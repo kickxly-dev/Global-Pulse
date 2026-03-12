@@ -65,8 +65,14 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useTheme } from '@/hooks/useTheme'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { initializeApp } from '@/lib/fixes'
 
 export default function HomePageClient() {
+  // Initialize app fixes
+  useEffect(() => {
+    initializeApp()
+  }, [])
+
   const [selectedCategory, setSelectedCategory] = useState<string>('general')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [country, setCountry] = useState<string>('us')
@@ -141,6 +147,7 @@ export default function HomePageClient() {
   
   const { permission, requestPermission } = useNotifications()
   const { theme, changeTheme } = useTheme()
+  const [currentTheme, setCurrentTheme] = useState('cyber')
   
   // Theme Scheduling
   useThemeSchedule(theme, (t: string) => changeTheme(t as any))
@@ -782,8 +789,14 @@ export default function HomePageClient() {
           const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement
           searchInput?.focus()
         }}
-        onThemeToggle={() => {}}
-        isDarkMode={true}
+        onThemeToggle={() => {
+          const themes = ['cyber', 'dark', 'light']
+          const currentIndex = themes.indexOf(currentTheme)
+          const nextTheme = themes[(currentIndex + 1) % themes.length]
+          setCurrentTheme(nextTheme)
+          changeTheme(nextTheme as any)
+        }}
+        isDarkMode={currentTheme !== 'light'}
       />
 
       {/* Daily Digest */}

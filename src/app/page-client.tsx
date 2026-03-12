@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { SessionProvider } from 'next-auth/react'
 import NewsFeed from '@/components/NewsFeed'
 import NewsMap from '@/components/NewsMap'
 import SearchBar from '@/components/SearchBar'
@@ -14,10 +15,19 @@ import DJMode from '@/components/DJMode'
 import ReadingModes, { ZenModeOverlay } from '@/components/ReadingModes'
 import EnhancedNewsCard from '@/components/EnhancedNewsCard'
 import BookmarksPanel from '@/components/BookmarksPanel'
+import UserMenu from '@/components/UserMenu'
+import ThemeToggle from '@/components/ThemeToggle'
+import MobileNav from '@/components/MobileNav'
+import AnalyticsDashboard from '@/components/AnalyticsDashboard'
+import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { getGlobalMood } from '@/lib/aiAnalysis'
 import { useVoiceControl } from '@/hooks/useVoiceControl'
-import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark } from 'lucide-react'
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { useOfflineMode } from '@/hooks/useOfflineMode'
+import { useBreakingNewsNotifications } from '@/hooks/useBreakingNewsNotifications'
+import { useAnalytics } from '@/hooks/useAnalytics'
+import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -34,6 +44,8 @@ export default function HomePageClient() {
   const [showPulseScore, setShowPulseScore] = useState(true)
   const [showPulsePredict, setShowPulsePredict] = useState(true)
   const [showBookmarks, setShowBookmarks] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
   const [tldrMode, setTldrMode] = useState(false)
@@ -51,6 +63,18 @@ export default function HomePageClient() {
     query: searchQuery,
     country: country,
   })
+  
+  // Infinite scroll
+  const { displayedItems, hasMore, loaderRef } = useInfiniteScroll({ items: articles, pageSize: 10 })
+  
+  // Offline mode
+  const { isOnline, offlineArticles, saveForOffline, isArticleOffline } = useOfflineMode()
+  
+  // Breaking news notifications
+  const { settings: notifSettings, requestPermission: requestNotifPermission, checkAndNotify } = useBreakingNewsNotifications()
+  
+  // Analytics
+  const { stats: analyticsStats, trackArticleRead } = useAnalytics()
   
   const { permission, requestPermission } = useNotifications()
   const { theme, changeTheme } = useTheme()
@@ -212,7 +236,33 @@ export default function HomePageClient() {
             </motion.div>
 
             <div className="flex items-center space-x-4">
+              {/* Offline Indicator */}
+              {!isOnline && (
+                <div className="flex items-center space-x-2 px-3 py-1 bg-cyber-red/20 border border-cyber-red/50 rounded-lg text-cyber-red text-sm">
+                  <WifiOff className="w-4 h-4" />
+                  <span>Offline</span>
+                </div>
+              )}
+              
               <LiveIndicator count={totalResults} />
+              
+              {/* Analytics Button */}
+              <button
+                onClick={() => setShowAnalytics(!showAnalytics)}
+                className={`cyber-button flex items-center space-x-2 ${showAnalytics ? 'bg-cyber-purple/20 border-cyber-purple' : ''}`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="hidden sm:inline">Stats</span>
+              </button>
+              
+              {/* Bookmarks Button */}
+              <button
+                onClick={() => setShowBookmarks(!showBookmarks)}
+                className={`cyber-button flex items-center space-x-2 ${showBookmarks ? 'bg-cyber-yellow/20 border-cyber-yellow' : ''}`}
+              >
+                <Bookmark className="w-4 h-4" />
+                <span className="hidden sm:inline">Saved</span>
+              </button>
               
               <button
                 onClick={() => requestPermission()}
@@ -234,20 +284,8 @@ export default function HomePageClient() {
                 <span className="hidden sm:inline">Map</span>
               </button>
 
-              <button
-                onClick={cycleTheme}
-                className="cyber-button flex items-center space-x-2"
-                title="Switch theme (Ctrl+T)"
-              >
-                {theme === 'light' ? (
-                  <Sun className="w-4 h-4" />
-                ) : theme === 'dark' ? (
-                  <Moon className="w-4 h-4" />
-                ) : (
-                  <Zap className="w-4 h-4" />
-                )}
-                <span className="hidden sm:inline capitalize">{theme}</span>
-              </button>
+              {/* Theme Toggle */}
+              <ThemeToggle />
 
               <button
                 onClick={() => setShowSettings(!showSettings)}
@@ -265,6 +303,9 @@ export default function HomePageClient() {
                 <Command className="w-4 h-4" />
                 <span className="hidden sm:inline">Keys</span>
               </button>
+              
+              {/* User Menu (Login/Sign Up) */}
+              <UserMenu />
             </div>
           </div>
 
@@ -299,6 +340,32 @@ export default function HomePageClient() {
           currentCountry={country}
         />
       </div>
+      
+      {/* Mobile Navigation */}
+      <MobileNav 
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab)
+          if (tab === 'bookmarks') setShowBookmarks(true)
+          if (tab === 'analytics') setShowAnalytics(true)
+          if (tab === 'settings') setShowSettings(true)
+        }}
+        onOpenSearch={() => searchInputRef.current?.focus()}
+      />
+
+      {/* Analytics Dashboard */}
+      <AnimatePresence>
+        {showAnalytics && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="container mx-auto px-4 mb-6"
+          >
+            <AnalyticsDashboard />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Reading Modes */}
       <ReadingModes

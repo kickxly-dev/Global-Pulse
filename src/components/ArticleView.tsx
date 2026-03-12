@@ -19,29 +19,39 @@ export default function ArticleView({ article, allArticles, isOpen, onClose }: A
   const [showRelated, setShowRelated] = useState(true)
 
   const handleBookmark = () => {
-    const bookmarks = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]')
-    const exists = bookmarks.find((b: any) => b.id === article.id)
-    
-    if (exists) {
-      const newBookmarks = bookmarks.filter((b: any) => b.id !== article.id)
-      localStorage.setItem('bookmarkedArticles', JSON.stringify(newBookmarks))
-      setIsBookmarked(false)
-    } else {
-      bookmarks.push(article)
-      localStorage.setItem('bookmarkedArticles', JSON.stringify(bookmarks))
-      setIsBookmarked(true)
+    try {
+      if (typeof window === 'undefined') return
+      
+      const bookmarks = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]')
+      const exists = bookmarks.find((b: any) => b.id === article.id)
+      
+      if (exists) {
+        const newBookmarks = bookmarks.filter((b: any) => b.id !== article.id)
+        localStorage.setItem('bookmarkedArticles', JSON.stringify(newBookmarks))
+        setIsBookmarked(false)
+      } else {
+        bookmarks.push(article)
+        localStorage.setItem('bookmarkedArticles', JSON.stringify(bookmarks))
+        setIsBookmarked(true)
+      }
+    } catch (e) {
+      console.error('Error accessing localStorage:', e)
     }
   }
 
   const handleShare = async () => {
-    if (navigator.share) {
-      await navigator.share({
-        title: article.title,
-        text: article.description || '',
-        url: article.url || window.location.href,
-      })
-    } else {
-      navigator.clipboard.writeText(article.url || window.location.href)
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: article.title,
+          text: article.description || '',
+          url: article.url || (typeof window !== 'undefined' ? window.location.href : ''),
+        })
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(article.url || (typeof window !== 'undefined' ? window.location.href : ''))
+      }
+    } catch (e) {
+      console.error('Error sharing:', e)
     }
   }
 

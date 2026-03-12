@@ -245,8 +245,8 @@ export default function HomePageClient() {
         <NewStoryPulse trigger={newStoryAnimation} />
         <BreakingNewsAlert show={breakingNewsAlert} />
       
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-cyber-dark/90 backdrop-blur-cyber border-b border-cyber-blue/20">
+      {/* Header - Modern Glassmorphism */}
+      <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-xl border-b border-white/10 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-4">
             <motion.div 
@@ -254,24 +254,24 @@ export default function HomePageClient() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-4"
             >
-              <div className="relative">
-                <Globe className="w-8 h-8 text-cyber-blue animate-pulse-glow" />
-                <div className="pulse-dot absolute -top-1 -right-1"></div>
+              <div className="relative group cursor-pointer">
+                <Globe className="w-10 h-10 text-cyber-blue group-hover:animate-spin-slow transition-all" />
+                <div className="absolute inset-0 bg-cyber-blue/20 rounded-full blur-xl group-hover:bg-cyber-blue/40 transition-all" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold font-cyber text-gradient hidden sm:block">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink bg-clip-text text-transparent hidden sm:block">
                   Global Pulse
                 </h1>
-                <p className="text-xs text-gray-400 hidden sm:block">Live Intelligence</p>
+                <p className="text-xs text-gray-500 hidden sm:block">Real-time Global Intelligence</p>
               </div>
             </motion.div>
             
-            {/* Right Section - Simplified */}
-            <div className="flex items-center space-x-2">
+            {/* Right Section - Modern */}
+            <div className="flex items-center space-x-3">
               {!isOnline && (
-                <div className="flex items-center space-x-2 px-3 py-1 bg-cyber-red/20 border border-cyber-red/50 rounded-lg text-cyber-red text-sm">
+                <div className="flex items-center space-x-2 px-3 py-1.5 bg-red-500/20 border border-red-500/50 rounded-full text-red-400 text-sm">
                   <WifiOff className="w-4 h-4" />
-                  <span>Offline</span>
+                  <span className="hidden sm:inline">Offline</span>
                 </div>
               )}
               
@@ -280,43 +280,47 @@ export default function HomePageClient() {
               {/* Analytics */}
               <button
                 onClick={() => setShowAnalytics(!showAnalytics)}
-                className={`cyber-button flex items-center space-x-2 ${showAnalytics ? 'bg-cyber-purple/20 border-cyber-purple' : ''}`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-all ${showAnalytics ? 'bg-cyber-purple/20 border-cyber-purple text-cyber-purple' : 'bg-white/5 border-white/10 text-gray-300 hover:border-cyber-purple/50'}`}
               >
                 <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Analytics</span>
+                <span className="hidden sm:inline text-sm">Analytics</span>
               </button>
               
               {/* Bookmarks */}
               <button
                 onClick={() => setShowBookmarks(!showBookmarks)}
-                className={`cyber-button flex items-center space-x-2 ${showBookmarks ? 'bg-cyber-yellow/20 border-cyber-yellow' : ''}`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-all ${showBookmarks ? 'bg-cyber-yellow/20 border-cyber-yellow text-cyber-yellow' : 'bg-white/5 border-white/10 text-gray-300 hover:border-cyber-yellow/50'}`}
               >
                 <Bookmark className="w-4 h-4" />
-                <span className="hidden sm:inline">Saved</span>
+                <span className="hidden sm:inline text-sm">Saved</span>
               </button>
               
               {/* Theme Toggle */}
               <ThemeToggle />
 
+              {/* Settings */}
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className="cyber-button flex items-center space-x-2"
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-all ${showSettings ? 'bg-cyber-blue/20 border-cyber-blue text-cyber-blue' : 'bg-white/5 border-white/10 text-gray-300 hover:border-cyber-blue/50'}`}
               >
                 <SettingsIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Settings</span>
+                <span className="hidden sm:inline text-sm">Settings</span>
               </button>
 
+              {/* Keyboard Shortcuts */}
               <button
                 onClick={() => showShortcutsHelp()}
-                className="cyber-button flex items-center space-x-2"
+                className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:border-cyber-green/50 transition-all"
                 title="Keyboard shortcuts (?)"
               >
                 <Command className="w-4 h-4" />
-                <span className="hidden sm:inline">Keys</span>
+                <span className="hidden sm:inline text-sm">Keys</span>
               </button>
               
-              {/* User Menu (Login/Sign Up) */}
-              <UserMenu />
+              {/* User Menu */}
+              <div className="pl-2 border-l border-white/10">
+                <UserMenu />
+              </div>
             </div>
           </div>
 

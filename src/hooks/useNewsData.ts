@@ -37,7 +37,7 @@ export function useNewsData({
   country = 'us',
   query = '',
   autoRefresh = true,
-  refreshInterval = 60000, // 60 seconds - more reasonable rate
+  refreshInterval = 30000, // 30 seconds - faster for testing
 }: UseNewsDataParams) {
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,12 +45,18 @@ export function useNewsData({
   const [totalResults, setTotalResults] = useState(0)
   const [breakingNews, setBreakingNews] = useState<NewsArticle[]>([])
   const [newArticlesCount, setNewArticlesCount] = useState(0)
+  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false)
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
   const previousArticlesRef = useRef<Set<string>>(new Set())
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const fetchNews = useCallback(async (showToast = false) => {
+  const fetchNews = useCallback(async (showToast = false, isAuto = false) => {
     try {
       setError(null)
+      
+      if (isAuto) {
+        setIsAutoRefreshing(true)
+      }
       
       const params = new URLSearchParams({
         category,
@@ -119,11 +125,14 @@ export function useNewsData({
       previousArticlesRef.current = newArticleIds
       setArticles(fetchedArticles)
       setTotalResults(data.totalResults || 0)
+      setLastRefresh(new Date())
       setLoading(false)
+      setIsAutoRefreshing(false)
     } catch (err: any) {
       console.error('Error fetching news:', err)
       setError(err.message)
       setLoading(false)
+      setIsAutoRefreshing(false)
       
       if (showToast) {
         toast.error('Failed to fetch latest news')
@@ -136,7 +145,7 @@ export function useNewsData({
 
     if (autoRefresh) {
       intervalRef.current = setInterval(() => {
-        fetchNews(true)
+        fetchNews(true, true) // Mark as auto-refresh
       }, refreshInterval)
     }
 
@@ -161,6 +170,8 @@ export function useNewsData({
     breakingNews,
     newArticlesCount,
     isBreakingNews,
+    isAutoRefreshing,
+    lastRefresh,
   }
 }
 

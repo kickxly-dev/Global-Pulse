@@ -43,6 +43,7 @@ import QuickActions from '@/components/QuickActions'
 import ReadingTime from '@/components/ReadingTime'
 import AdvancedSearch from '@/components/AdvancedSearch'
 import DailyDigest from '@/components/DailyDigest'
+import AutoRefreshIndicator from '@/components/AutoRefreshIndicator'
 import { NewsCardSkeleton, HeroSkeleton, SidebarSkeleton, ArticleViewSkeleton, StatsSkeleton } from '@/components/LoadingSkeletons'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -108,7 +109,7 @@ export default function HomePageClient() {
   const previousArticleCount = useRef(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
-  const { articles, loading, error, refresh, totalResults, breakingNews, newArticlesCount, isBreakingNews } = useNewsData({
+  const { articles, loading, error, refresh, totalResults, breakingNews, newArticlesCount, isBreakingNews, isAutoRefreshing, lastRefresh } = useNewsData({
     category: selectedCategory,
     query: searchQuery,
     country: country,
@@ -789,6 +790,12 @@ export default function HomePageClient() {
       <DailyDigest
         isOpen={showDailyDigest}
         onClose={() => setShowDailyDigest(false)}
+      />
+
+      {/* Auto Refresh Indicator */}
+      <AutoRefreshIndicator
+        isAutoRefreshing={isAutoRefreshing}
+        lastRefresh={lastRefresh}
       />
     </div>
   )

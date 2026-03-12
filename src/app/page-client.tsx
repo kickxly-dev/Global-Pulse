@@ -22,6 +22,7 @@ import RelatedArticles from '@/components/RelatedArticles'
 import ArticleReactions from '@/components/ArticleReactions'
 import NewsletterSubscription from '@/components/NewsletterSubscription'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import AdminPanel from '@/components/AdminPanel'
 import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -234,8 +235,8 @@ export default function HomePageClient() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-cyber-darker cyber-grid relative">
-      <div className="scan-line"></div>
+    <ErrorBoundary>
+      <div className={`min-h-screen bg-cyber-darker ${theme === 'light' ? 'theme-light' : theme === 'dark' ? 'theme-dark' : 'theme-cyber'}`}>
       
       <NotificationManager />
       <LiveDataStream />
@@ -722,6 +723,10 @@ export default function HomePageClient() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Admin Panel - Secret: Ctrl+Shift+A */}
+      <AdminPanel />
+      </ErrorBoundary>
     </div>
   )
 }

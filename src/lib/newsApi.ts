@@ -1,9 +1,19 @@
 import axios from 'axios'
 import { NewsArticle, NewsApiResponse } from '@/types/news'
 
-// Use server-side env var first, fallback to client-side
-const NEWS_API_KEY = process.env.NEWS_API_KEY || process.env.NEXT_PUBLIC_NEWS_API_KEY
-const NEWS_API_BASE_URL = 'https://newsapi.org/v2'
+// GDELT API - Free, no API key required, works in production
+const GDELT_API_BASE_URL = 'https://api.gdeltproject.org/api/v2/doc/doc'
+
+// Category to GDELT theme mapping
+const CATEGORY_THEMES: Record<string, string> = {
+  general: '',
+  technology: 'theme:technology',
+  business: 'theme:economy',
+  health: 'theme:health',
+  science: 'theme:science',
+  sports: 'theme:sports',
+  entertainment: 'theme:entertainment',
+}
 
 // Country coordinates for map markers
 const COUNTRY_COORDINATES: Record<string, { lat: number; lng: number }> = {
@@ -59,6 +69,30 @@ const COUNTRY_COORDINATES: Record<string, { lat: number; lng: number }> = {
   pe: { lat: -9.1900, lng: -75.0152 },
 }
 
+// Country name mapping for GDELT
+const COUNTRY_NAMES: Record<string, string> = {
+  us: 'United States',
+  gb: 'United Kingdom',
+  ca: 'Canada',
+  au: 'Australia',
+  de: 'Germany',
+  fr: 'France',
+  it: 'Italy',
+  jp: 'Japan',
+  in: 'India',
+  cn: 'China',
+  br: 'Brazil',
+  mx: 'Mexico',
+  ru: 'Russia',
+  za: 'South Africa',
+  kr: 'South Korea',
+  es: 'Spain',
+  nl: 'Netherlands',
+  se: 'Sweden',
+  no: 'Norway',
+  ch: 'Switzerland',
+}
+
 export async function fetchTopHeadlines(params: {
   category?: string
   country?: string
@@ -68,40 +102,73 @@ export async function fetchTopHeadlines(params: {
   try {
     const { category = 'general', country = 'us', query, pageSize = 50 } = params
 
-    const queryParams: any = {
-      apiKey: NEWS_API_KEY,
-      pageSize,
+    // Build GDELT query
+    let queryParts: string[] = []
+    
+    // Add category theme
+    if (category && CATEGORY_THEMES[category]) {
+      queryParts.push(CATEGORY_THEMES[category])
     }
-
+    
+    // Add country filter
+    if (country && COUNTRY_NAMES[country]) {
+      queryParts.push(`sourcecountry:${COUNTRY_NAMES[country]}`)
+    }
+    
+    // Add search query
     if (query) {
-      queryParams.q = query
-    } else {
-      queryParams.country = country
-      if (category && category !== 'general') {
-        queryParams.category = category
-      }
+      queryParts.push(query)
     }
+    
+    // Default query if no filters
+    const searchQuery = queryParts.length > 0 ? queryParts.join(' ') : 'news'
+    
+    // Calculate time range (last 24 hours)
+    const now = new Date()
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const startDateTime = yesterday.toISOString().replace(/[-:]/g, '').split('.')[0] + '00'
+    const endDateTime = now.toISOString().replace(/[-:]/g, '').split('.')[0] + '00'
 
-    const response = await axios.get(`${NEWS_API_BASE_URL}/top-headlines`, {
-      params: queryParams,
+    const response = await axios.get(GDELT_API_BASE_URL, {
+      params: {
+        query: searchQuery,
+        mode: 'artlist',
+        format: 'json',
+        maxrecords: pageSize,
+        startdatetime: startDateTime,
+        enddatetime: endDateTime,
+        sort: 'datedesc',
+      },
+      timeout: 15000,
     })
 
-    // Add coordinates to articles based on country
-    const articlesWithCoords = response.data.articles.map((article: any, index: number) => ({
-      ...article,
-      id: article.url || `article-${Date.now()}-${index}`,
+    // Transform GDELT response to our format
+    const articles = (response.data.articles || []).map((article: any, index: number) => ({
+      id: article.url || `gdelt-${Date.now()}-${index}`,
+      title: article.title || 'Untitled',
+      description: article.segbody || article.snippet || '',
+      url: article.url || '#',
+      urlToImage: article.imageurl || null,
+      publishedAt: article.segdate || new Date().toISOString(),
+      source: {
+        id: article.domain || 'unknown',
+        name: article.domain || 'Unknown Source',
+      },
+      author: null,
+      content: article.segbody || article.snippet || '',
       coordinates: COUNTRY_COORDINATES[country] || { lat: 0, lng: 0 },
       country,
       category,
     }))
 
     return {
-      ...response.data,
-      articles: articlesWithCoords,
+      status: 'ok',
+      totalResults: response.data.totalcount || articles.length,
+      articles,
     }
   } catch (error: any) {
-    console.error('Error fetching news:', error.response?.data || error.message)
-    throw new Error(error.response?.data?.message || 'Failed to fetch news')
+    console.error('Error fetching news from GDELT:', error.response?.data || error.message)
+    throw new Error('Failed to fetch news from GDELT')
   }
 }
 
@@ -111,31 +178,52 @@ export async function searchNews(query: string, params?: {
   pageSize?: number
 }): Promise<NewsApiResponse> {
   try {
-    const { language = 'en', sortBy = 'publishedAt', pageSize = 50 } = params || {}
+    const { pageSize = 50 } = params || {}
 
-    const response = await axios.get(`${NEWS_API_BASE_URL}/everything`, {
+    // Calculate time range (last 7 days for search)
+    const now = new Date()
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const startDateTime = weekAgo.toISOString().replace(/[-:]/g, '').split('.')[0] + '00'
+    const endDateTime = now.toISOString().replace(/[-:]/g, '').split('.')[0] + '00'
+
+    const response = await axios.get(GDELT_API_BASE_URL, {
       params: {
-        q: query,
-        language,
-        sortBy,
-        pageSize,
-        apiKey: NEWS_API_KEY,
+        query: query,
+        mode: 'artlist',
+        format: 'json',
+        maxrecords: pageSize,
+        startdatetime: startDateTime,
+        enddatetime: endDateTime,
+        sort: 'datedesc',
       },
+      timeout: 15000,
     })
 
-    const articlesWithCoords = response.data.articles.map((article: any, index: number) => ({
-      ...article,
-      id: article.url || `article-${Date.now()}-${index}`,
-      coordinates: { lat: 0, lng: 0 }, // Default coordinates for search results
+    // Transform GDELT response
+    const articles = (response.data.articles || []).map((article: any, index: number) => ({
+      id: article.url || `gdelt-search-${Date.now()}-${index}`,
+      title: article.title || 'Untitled',
+      description: article.segbody || article.snippet || '',
+      url: article.url || '#',
+      urlToImage: article.imageurl || null,
+      publishedAt: article.segdate || new Date().toISOString(),
+      source: {
+        id: article.domain || 'unknown',
+        name: article.domain || 'Unknown Source',
+      },
+      author: null,
+      content: article.segbody || article.snippet || '',
+      coordinates: { lat: 0, lng: 0 },
     }))
 
     return {
-      ...response.data,
-      articles: articlesWithCoords,
+      status: 'ok',
+      totalResults: response.data.totalcount || articles.length,
+      articles,
     }
   } catch (error: any) {
-    console.error('Error searching news:', error.response?.data || error.message)
-    throw new Error(error.response?.data?.message || 'Failed to search news')
+    console.error('Error searching news from GDELT:', error.response?.data || error.message)
+    throw new Error('Failed to search news from GDELT')
   }
 }
 

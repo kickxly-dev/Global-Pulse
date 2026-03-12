@@ -446,9 +446,9 @@ export default function HomePageClient() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* News Feed */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             {(tldrMode || speedReadMode) ? (
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold font-cyber text-gradient mb-4">
@@ -484,7 +484,7 @@ export default function HomePageClient() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="lg:col-span-1 space-y-4">
             {/* Pulse Score */}
             {showPulseScore && (
               <motion.div
@@ -496,131 +496,27 @@ export default function HomePageClient() {
               </motion.div>
             )}
 
-            {/* Map */}
-            {showMap && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="cyber-card"
-              >
-                <h2 className="text-lg font-bold font-cyber text-cyber-blue mb-4">
-                  Global Activity Map
-                </h2>
-                <NewsMap articles={articles} />
-              </motion.div>
-            )}
-
-            {/* Settings Panel */}
-            {showSettings && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <Settings />
-              </motion.div>
-            )}
-
-            {/* DJ Mode */}
-            {globalMood && (
-              <DJMode
-                globalMood={globalMood.mood}
-                moodScore={globalMood.moodScore}
-                enabled={djMode}
-                onToggle={() => setDjMode(prev => !prev)}
-              />
-            )}
-
-            {/* Pulse Predict */}
-            {showPulsePredict && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <PulsePredict articles={articles} />
-              </motion.div>
-            )}
-
-            {/* Live Stats */}
-            <div className="cyber-card">
-              <h2 className="text-lg font-bold font-cyber text-cyber-purple mb-4">
-                Live Statistics
-              </h2>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Total Stories</span>
-                  <span className="text-lg font-bold text-cyber-blue">{totalResults.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Active Sources</span>
-                  <span className="text-lg font-bold text-cyber-green">
-                    {new Set(articles.map(a => a.source.name)).size}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Last Updated</span>
-                  <span className="text-xs text-gray-500">Just now</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Trending Topics */}
-            <TrendingTopics articles={articles} />
-
-            {/* Search History & Trending */}
-            <div className="cyber-card">
-              <h2 className="text-lg font-bold font-cyber text-cyber-blue mb-4">
-                Search Trends
-              </h2>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-gray-500 mb-2">Recent Searches</p>
-                  <div className="space-y-1">
-                    {getRecent(3).map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setSearchQuery(item.query)}
-                        className="text-xs text-gray-400 hover:text-cyber-blue"
-                      >
-                        {item.query}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-2">Trending Now</p>
-                  <div className="space-y-1">
-                    {getTrending(3).map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setSearchQuery(item.query)}
-                        className="text-xs text-cyber-yellow hover:text-cyber-yellow/80"
-                      >
-                        {item.query}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Newsletter Subscription */}
+            {/* Newsletter */}
             <NewsletterSubscription />
 
-            {/* Top Sources */}
+            {/* Quick Stats */}
             <div className="cyber-card">
-              <h2 className="text-lg font-bold font-cyber text-cyber-yellow mb-4">
-                Top Sources
+              <h2 className="text-lg font-bold font-cyber text-cyber-blue mb-3">
+                Quick Stats
               </h2>
-              <div className="space-y-2">
-                {Array.from(new Set(articles.slice(0, 5).map(a => a.source.name))).map((source, index) => (
-                  <div key={index} className="flex items-center space-x-2 text-sm">
-                    <div className="w-2 h-2 bg-cyber-blue rounded-full"></div>
-                    <span className="text-gray-300">{source}</span>
-                  </div>
-                ))}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Stories</span>
+                  <span className="text-cyber-blue">{totalResults}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Sources</span>
+                  <span className="text-cyber-green">{new Set(articles.map(a => a.source.name)).size}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Reading Streak</span>
+                  <span className="text-cyber-yellow">{streak}🔥</span>
+                </div>
               </div>
             </div>
           </div>

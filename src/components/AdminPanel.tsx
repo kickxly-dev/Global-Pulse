@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Database, Users, Settings, Activity, Zap, Eye, EyeOff, Trash2, Download, RefreshCw, Lock } from 'lucide-react'
+import { Shield, Database, Users, Settings, Activity, Zap, Eye, EyeOff, Trash2, Download, RefreshCw, Lock, Newspaper, TrendingUp, BarChart3 } from 'lucide-react'
 
 interface AdminStats {
   totalUsers: number
@@ -13,6 +13,16 @@ interface AdminStats {
   avgResponseTime: number
   storageUsed: string
   uptime: string
+}
+
+interface Article {
+  id: string
+  title: string
+  description: string
+  source: { name: string }
+  publishedAt: string
+  category?: string
+  url?: string
 }
 
 export default function AdminPanel() {
@@ -30,6 +40,8 @@ export default function AdminPanel() {
     uptime: '0 days',
   })
   const [logs, setLogs] = useState<string[]>([])
+  const [articles, setArticles] = useState<Article[]>([])
+  const [activeTab, setActiveTab] = useState<'overview' | 'articles' | 'users' | 'logs'>('overview')
 
   // Secret key combination: Ctrl+Shift+A
   useEffect(() => {
@@ -65,6 +77,29 @@ export default function AdminPanel() {
       storageUsed: `${Math.floor(Math.random() * 500) + 100} MB`,
       uptime: `${Math.floor(Math.random() * 30) + 1} days`,
     })
+
+    // Load articles from localStorage
+    try {
+      const saved = localStorage.getItem('cachedArticles')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setArticles(Array.isArray(parsed) ? parsed.slice(0, 50) : [])
+      } else {
+        // Generate sample articles
+        const sampleArticles: Article[] = Array.from({ length: 20 }, (_, i) => ({
+          id: `article-${i}`,
+          title: `Sample News Article ${i + 1}`,
+          description: `This is a sample description for article ${i + 1}...`,
+          source: { name: ['CNN', 'BBC', 'Reuters', 'AP News'][i % 4] },
+          publishedAt: new Date(Date.now() - i * 3600000).toISOString(),
+          category: ['general', 'technology', 'business', 'health'][i % 4],
+          url: `https://example.com/article-${i}`,
+        }))
+        setArticles(sampleArticles)
+      }
+    } catch (e) {
+      console.error('Failed to load articles:', e)
+    }
 
     // Add some logs
     const newLogs = [
@@ -168,55 +203,154 @@ export default function AdminPanel() {
             </form>
           ) : (
             <div className="space-y-6">
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-4">
-                  <Users className="w-5 h-5 text-cyber-blue mb-2" />
-                  <p className="text-xs text-gray-400">Total Users</p>
-                  <p className="text-xl font-bold text-white">{stats.totalUsers.toLocaleString()}</p>
-                </div>
-                <div className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-4">
-                  <Activity className="w-5 h-5 text-cyber-green mb-2" />
-                  <p className="text-xs text-gray-400">Active Now</p>
-                  <p className="text-xl font-bold text-white">{stats.activeUsers}</p>
-                </div>
-                <div className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-4">
-                  <Database className="w-5 h-5 text-cyber-yellow mb-2" />
-                  <p className="text-xs text-gray-400">Articles</p>
-                  <p className="text-xl font-bold text-white">{stats.totalArticles.toLocaleString()}</p>
-                </div>
-                <div className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-4">
-                  <Zap className="w-5 h-5 text-cyber-purple mb-2" />
-                  <p className="text-xs text-gray-400">API Calls</p>
-                  <p className="text-xl font-bold text-white">{stats.apiCalls.toLocaleString()}</p>
-                </div>
+              {/* Tabs */}
+              <div className="flex space-x-1 bg-cyber-dark/50 border border-gray-700 rounded-lg p-1">
+                {[
+                  { id: 'overview', label: 'Overview', icon: BarChart3 },
+                  { id: 'articles', label: 'Articles', icon: Newspaper },
+                  { id: 'users', label: 'Users', icon: Users },
+                  { id: 'logs', label: 'Logs', icon: Settings },
+                ].map(tab => {
+                  const Icon = tab.icon
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                        activeTab === tab.id
+                          ? 'bg-cyber-blue text-white'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  )
+                })}
               </div>
 
-              {/* Performance Metrics */}
-              <div className="bg-cyber-dark/30 border border-gray-700 rounded-lg p-4">
-                <h2 className="text-lg font-bold text-white mb-3">Performance</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-400">Error Rate</p>
-                    <p className={`text-lg font-bold ${
-                      stats.errorRate > 5 ? 'text-cyber-red' : 
-                      stats.errorRate > 2 ? 'text-cyber-yellow' : 'text-cyber-green'
-                    }`}>
-                      {stats.errorRate.toFixed(2)}%
-                    </p>
+              {/* Overview Tab */}
+              {activeTab === 'overview' && (
+                <>
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-4">
+                      <Users className="w-5 h-5 text-cyber-blue mb-2" />
+                      <p className="text-xs text-gray-400">Total Users</p>
+                      <p className="text-xl font-bold text-white">{stats.totalUsers.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-4">
+                      <Activity className="w-5 h-5 text-cyber-green mb-2" />
+                      <p className="text-xs text-gray-400">Active Now</p>
+                      <p className="text-xl font-bold text-white">{stats.activeUsers}</p>
+                    </div>
+                    <div className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-4">
+                      <Database className="w-5 h-5 text-cyber-yellow mb-2" />
+                      <p className="text-xs text-gray-400">Articles</p>
+                      <p className="text-xl font-bold text-white">{stats.totalArticles.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-4">
+                      <Zap className="w-5 h-5 text-cyber-purple mb-2" />
+                      <p className="text-xs text-gray-400">API Calls</p>
+                      <p className="text-xl font-bold text-white">{stats.apiCalls.toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Avg Response</p>
-                    <p className="text-lg font-bold text-cyber-blue">
-                      {stats.avgResponseTime.toFixed(0)}ms
-                    </p>
+
+                  {/* Performance Metrics */}
+                  <div className="bg-cyber-dark/30 border border-gray-700 rounded-lg p-4">
+                    <h2 className="text-lg font-bold text-white mb-3">Performance</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400">Error Rate</p>
+                        <p className={`text-lg font-bold ${
+                          stats.errorRate > 5 ? 'text-cyber-red' : 
+                          stats.errorRate > 2 ? 'text-cyber-yellow' : 'text-cyber-green'
+                        }`}>
+                          {stats.errorRate.toFixed(2)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Avg Response</p>
+                        <p className="text-lg font-bold text-cyber-blue">
+                          {stats.avgResponseTime.toFixed(0)}ms
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Uptime</p>
+                        <p className="text-lg font-bold text-cyber-green">{stats.uptime}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Uptime</p>
-                    <p className="text-lg font-bold text-cyber-green">{stats.uptime}</p>
+                </>
+              )}
+
+              {/* Articles Tab */}
+              {activeTab === 'articles' && (
+                <div className="bg-cyber-dark/30 border border-gray-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-white">Recent Articles</h2>
+                    <span className="text-sm text-gray-400">{articles.length} articles</span>
+                  </div>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {articles.map((article, i) => (
+                      <div key={article.id || i} className="bg-cyber-dark/50 border border-gray-700 rounded-lg p-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="text-sm font-medium text-white line-clamp-1">{article.title}</h3>
+                            <p className="text-xs text-gray-400 line-clamp-2 mt-1">{article.description}</p>
+                            <div className="flex items-center space-x-2 mt-2">
+                              <span className="text-xs text-cyber-blue">{article.source.name}</span>
+                              {article.category && (
+                                <span className="text-xs text-cyber-yellow">• {article.category}</span>
+                              )}
+                              <span className="text-xs text-gray-500">
+                                • {new Date(article.publishedAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          {article.url && (
+                            <a
+                              href={article.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-2 text-cyber-blue hover:text-cyber-blue/80"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Users Tab */}
+              {activeTab === 'users' && (
+                <div className="bg-cyber-dark/30 border border-gray-700 rounded-lg p-4">
+                  <h2 className="text-lg font-bold text-white mb-4">User Management</h2>
+                  <div className="space-y-4">
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-cyber-blue mx-auto mb-4" />
+                      <p className="text-gray-400">User management features coming soon</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Logs Tab */}
+              {activeTab === 'logs' && (
+                <div className="bg-cyber-dark/30 border border-gray-700 rounded-lg p-4">
+                  <h2 className="text-lg font-bold text-white mb-3">System Logs</h2>
+                  <div className="bg-black rounded-lg p-3 h-48 overflow-y-auto font-mono text-xs">
+                    {logs.map((log, i) => (
+                      <div key={i} className="text-gray-400 hover:text-white">
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex flex-wrap gap-2">
@@ -248,18 +382,6 @@ export default function AdminPanel() {
                   <Trash2 className="w-4 h-4" />
                   <span>Clear Logs</span>
                 </button>
-              </div>
-
-              {/* Logs */}
-              <div className="bg-cyber-dark/30 border border-gray-700 rounded-lg p-4">
-                <h2 className="text-lg font-bold text-white mb-3">System Logs</h2>
-                <div className="bg-black rounded-lg p-3 h-48 overflow-y-auto font-mono text-xs">
-                  {logs.map((log, i) => (
-                    <div key={i} className="text-gray-400 hover:text-white">
-                      {log}
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           )}

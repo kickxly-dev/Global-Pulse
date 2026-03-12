@@ -38,7 +38,7 @@ import { useSearchHistory } from '@/hooks/useSearchHistory'
 import { usePersonalization } from '@/hooks/usePersonalization'
 import { useReadingGoals } from '@/hooks/useReadingGoals'
 import { useThemeSchedule } from '@/hooks/useThemeSchedule'
-import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, LayoutDashboard, Target, Rss, X } from 'lucide-react'
+import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, LayoutDashboard, Target, Rss, X, Map } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -298,6 +298,15 @@ export default function HomePageClient() {
                 <span className="hidden sm:inline">{streak}🔥</span>
               </button>
               
+              {/* Map Toggle */}
+              <button
+                onClick={() => setShowMap(!showMap)}
+                className={`cyber-button flex items-center space-x-2 ${showMap ? 'bg-cyber-green/20 border-cyber-green' : ''}`}
+              >
+                <Map className="w-4 h-4" />
+                <span className="hidden sm:inline">Map</span>
+              </button>
+              
               {/* Performance Monitor Toggle */}
               <button
                 onClick={() => setShowPerformance(!showPerformance)}
@@ -496,6 +505,18 @@ export default function HomePageClient() {
                 exit={{ opacity: 0, scale: 0.95 }}
               >
                 <PulseScore articles={articles} totalResults={totalResults} />
+              </motion.div>
+            )}
+
+            {/* Map */}
+            {showMap && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="cyber-card"
+              >
+                <NewsMap articles={articles} />
               </motion.div>
             )}
 

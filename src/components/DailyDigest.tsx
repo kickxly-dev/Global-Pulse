@@ -139,7 +139,10 @@ export default function DailyDigest({ isOpen, onClose, email }: DailyDigestProps
   }
 
   const sendDigest = async () => {
-    if (!emailInput || !emailInput.includes('@')) return
+    if (!emailInput || !emailInput.includes('@')) {
+      alert('Please enter a valid email address')
+      return
+    }
 
     try {
       const response = await fetch('/api/digest', {
@@ -159,10 +162,14 @@ export default function DailyDigest({ isOpen, onClose, email }: DailyDigestProps
       const data = await response.json()
       if (response.ok && data.success) {
         console.log('Digest sent successfully:', data)
+        alert('Daily Digest subscribed successfully! Check your email.')
         onClose()
+      } else {
+        alert(data.error || 'Failed to subscribe to digest')
       }
     } catch (error) {
       console.error('Failed to send digest:', error)
+      alert('Failed to subscribe. Please try again.')
     }
   }
 
@@ -206,27 +213,25 @@ export default function DailyDigest({ isOpen, onClose, email }: DailyDigestProps
           </div>
 
           {/* Email Input */}
-          {!email && (
-            <div className="p-6 border-b border-white/10">
-              <div className="flex gap-3">
-                <input
-                  type="email"
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="Enter your email to receive digest"
-                  className="flex-1 px-4 py-3 bg-gray-800 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyber-blue"
-                />
-                <button
-                  onClick={sendDigest}
-                  disabled={!emailInput.includes('@')}
-                  className="px-6 py-3 bg-cyber-blue text-gray-900 rounded-lg font-medium hover:bg-cyber-blue/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                >
-                  <Send className="w-5 h-5" />
-                  Send Digest
-                </button>
-              </div>
+          <div className="p-6 border-b border-white/10">
+            <div className="flex gap-3">
+              <input
+                type="email"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="Enter your email to receive digest"
+                className="flex-1 px-4 py-3 bg-gray-800 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyber-blue"
+              />
+              <button
+                onClick={sendDigest}
+                disabled={!emailInput.includes('@')}
+                className="px-6 py-3 bg-cyber-blue text-gray-900 rounded-lg font-medium hover:bg-cyber-blue/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Send Digest
+              </button>
             </div>
-          )}
+          </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">

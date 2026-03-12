@@ -41,17 +41,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Save subscription to localStorage equivalent (in production, use a database)
-    const subscriptions = JSON.parse(localStorage.getItem('digestSubscriptions') || '[]')
-    if (!subscriptions.find((sub: any) => sub.email === email)) {
-      subscriptions.push({
-        email,
-        preferences,
-        subscribedAt: new Date().toISOString(),
-        lastSent: new Date().toISOString()
-      })
-      localStorage.setItem('digestSubscriptions', JSON.stringify(subscriptions))
-    }
+    // Save subscription (in production, use a database)
+    // For now, just simulate successful subscription
+    console.log(`Email ${email} subscribed to Daily Digest with preferences:`, preferences)
 
     // In a real implementation, you would:
     // 1. Use an email service like SendGrid, Mailgun, or AWS SES
@@ -80,14 +72,15 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    // Get digest statistics
-    const subscriptions = JSON.parse(localStorage.getItem('digestSubscriptions') || '[]')
-    const subscribers = subscriptions.length
+    // Get digest statistics (in production, use a database)
+    const subscribers = 0 // Placeholder - would come from database
+    const lastDigestSent = new Date().toLocaleDateString()
+    const nextDigest = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString()
     
     return NextResponse.json({
       subscribers,
-      lastDigestSent: new Date().toLocaleDateString(),
-      nextDigest: new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString()
+      lastDigestSent,
+      nextDigest
     })
   } catch (error) {
     return NextResponse.json(

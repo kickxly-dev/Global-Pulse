@@ -1,32 +1,40 @@
 import { NewsArticle } from '@/types/news'
 
-interface OpenAIConfig {
+interface AIConfig {
   apiKey?: string
   model?: string
   maxTokens?: number
+  provider?: 'openai' | 'groq'
 }
 
-const DEFAULT_CONFIG: OpenAIConfig = {
-  model: 'gpt-3.5-turbo',
+const DEFAULT_CONFIG: AIConfig = {
+  model: 'llama-3.3-70b-versatile', // Groq's fast Llama model
   maxTokens: 150,
+  provider: 'groq',
 }
 
-export class OpenAIService {
-  private config: OpenAIConfig
-  private baseUrl = 'https://api.openai.com/v1/chat/completions'
+export class AIService {
+  private config: AIConfig
+  
+  // Groq API endpoint (OpenAI-compatible)
+  private groqUrl = 'https://api.groq.com/openai/v1/chat/completions'
+  private openaiUrl = 'https://api.openai.com/v1/chat/completions'
 
-  constructor(config?: Partial<OpenAIConfig>) {
+  constructor(config?: Partial<AIConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config }
+  }
+
+  private getApiUrl(): string {
+    return this.config.provider === 'groq' ? this.groqUrl : this.openaiUrl
   }
 
   async generateSummary(article: NewsArticle): Promise<string> {
     if (!this.config.apiKey) {
-      // Fall back to local summary
       return this.generateLocalSummary(article)
     }
 
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(this.getApiUrl(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,13 +58,13 @@ export class OpenAIService {
       })
 
       if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`)
+        throw new Error(`AI API error: ${response.status}`)
       }
 
       const data = await response.json()
       return data.choices[0]?.message?.content || this.generateLocalSummary(article)
     } catch (error) {
-      console.error('OpenAI summary failed:', error)
+      console.error('AI summary failed:', error)
       return this.generateLocalSummary(article)
     }
   }
@@ -71,7 +79,7 @@ export class OpenAIService {
     }
 
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(this.getApiUrl(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +110,7 @@ export class OpenAIService {
         mood: result.mood || 'neutral',
       }
     } catch (error) {
-      console.error('OpenAI sentiment failed:', error)
+      console.error('AI sentiment failed:', error)
       return this.analyzeLocalSentiment(text)
     }
   }
@@ -113,7 +121,7 @@ export class OpenAIService {
     }
 
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(this.getApiUrl(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,7 +148,7 @@ export class OpenAIService {
       const keywords = JSON.parse(data.choices[0]?.message?.content || '[]')
       return Array.isArray(keywords) ? keywords : this.extractLocalKeywords(text)
     } catch (error) {
-      console.error('OpenAI keywords failed:', error)
+      console.error('AI keywords failed:', error)
       return this.extractLocalKeywords(text)
     }
   }
@@ -190,13 +198,17 @@ export class OpenAIService {
 }
 
 // Singleton instance
-let openAIService: OpenAIService | null = null
+let aiService: AIService | null = null
 
-export function getOpenAIService(apiKey?: string): OpenAIService {
-  if (!openAIService) {
-    openAIService = new OpenAIService({ apiKey })
+export function getAIService(apiKey?: string, provider?: 'openai' | 'groq'): AIService {
+  if (!aiService) {
+    aiService = new AIService({ apiKey, provider })
   } else if (apiKey) {
-    openAIService = new OpenAIService({ apiKey })
+    aiService = new AIService({ apiKey, provider })
   }
-  return openAIService
+  return aiService
 }
+
+// Backward compatibility
+export const OpenAIService = AIService
+export const getOpenAIService = getAIService

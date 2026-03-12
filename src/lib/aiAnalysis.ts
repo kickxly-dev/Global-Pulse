@@ -1,5 +1,5 @@
 import { NewsArticle } from '@/types/news'
-import { getOpenAIService } from './openai'
+import { getAIService } from './openai'
 
 export type Sentiment = 'positive' | 'negative' | 'neutral'
 export type Mood = 'happy' | 'sad' | 'angry' | 'fearful' | 'neutral' | 'exciting'
@@ -26,23 +26,36 @@ const POSITIVE_WORDS = ['success', 'win', 'achieve', 'breakthrough', 'improve', 
 const NEGATIVE_WORDS = ['fail', 'loss', 'crash', 'crisis', 'decline', 'fall', 'negative', 'disaster', 'threat', 'danger', 'war', 'conflict', 'attack', 'death', 'injury', 'collapse', 'recession', 'pandemic']
 const NEUTRAL_WORDS = ['announce', 'report', 'update', 'release', 'statement', 'reveal', 'plan', 'consider', 'discuss', 'review']
 
-// Check if OpenAI is configured
-const isOpenAIEnabled = (): boolean => {
-  return typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_OPENAI_API_KEY
+// Check if AI is configured (Groq or OpenAI)
+const getAIConfig = (): { apiKey: string | undefined; provider: 'groq' | 'openai' } => {
+  if (typeof process !== 'undefined') {
+    const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY
+    const openaiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+    const provider = process.env.NEXT_PUBLIC_AI_PROVIDER as 'groq' | 'openai' || 'groq'
+    
+    if (provider === 'groq' && groqKey && groqKey !== 'your_groq_api_key_here') {
+      return { apiKey: groqKey, provider: 'groq' }
+    }
+    if (openaiKey && openaiKey !== 'your_openai_api_key_here') {
+      return { apiKey: openaiKey, provider: 'openai' }
+    }
+  }
+  return { apiKey: undefined, provider: 'groq' }
 }
 
 export async function analyzeArticleAsync(article: NewsArticle): Promise<AnalysisResult> {
   const text = `${article.title} ${article.description || ''} ${article.content || ''}`.toLowerCase()
+  const { apiKey, provider } = getAIConfig()
   
-  // Use OpenAI if configured
-  if (isOpenAIEnabled()) {
+  // Use AI if configured
+  if (apiKey) {
     try {
-      const openai = getOpenAIService(process.env.NEXT_PUBLIC_OPENAI_API_KEY)
+      const ai = getAIService(apiKey, provider)
       
       const [summary, sentimentResult, keywords] = await Promise.all([
-        openai.generateSummary(article),
-        openai.analyzeSentiment(text),
-        openai.generateKeywords(text),
+        ai.generateSummary(article),
+        ai.analyzeSentiment(text),
+        ai.generateKeywords(text),
       ])
       
       const mood = analyzeMood(text, sentimentResult.sentiment)
@@ -62,7 +75,7 @@ export async function analyzeArticleAsync(article: NewsArticle): Promise<Analysi
         entities
       }
     } catch (error) {
-      console.error('OpenAI analysis failed, falling back to local:', error)
+      console.error('AI analysis failed, falling back to local:', error)
       // Fall through to local analysis
     }
   }

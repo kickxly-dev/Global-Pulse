@@ -6,26 +6,41 @@ const RSS_FEEDS: Record<string, string[]> = {
   general: [
     'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
     'https://feeds.bbci.co.uk/news/rss.xml',
+    'https://www.theguardian.com/world/rss',
+    'https://www.aljazeera.com/xml/rss/all.xml',
+    'http://feeds.reuters.com/reuters/topNews',
   ],
   technology: [
     'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',
     'https://feeds.bbci.co.uk/news/technology/rss.xml',
+    'https://www.theguardian.com/technology/rss',
+    'https://techcrunch.com/feed/',
   ],
   business: [
     'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',
     'https://feeds.bbci.co.uk/news/business/rss.xml',
+    'http://feeds.reuters.com/reuters/businessNews',
+    'https://www.theguardian.com/business/rss',
   ],
   health: [
     'https://rss.nytimes.com/services/xml/rss/nyt/Health.xml',
+    'https://feeds.bbci.co.uk/news/health/rss.xml',
+    'https://www.theguardian.com/society/health/rss',
   ],
   science: [
     'https://rss.nytimes.com/services/xml/rss/nyt/Science.xml',
+    'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml',
+    'https://www.theguardian.com/science/rss',
   ],
   sports: [
     'https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml',
+    'https://feeds.bbci.co.uk/sport/rss.xml',
+    'https://www.theguardian.com/sport/rss',
   ],
   entertainment: [
     'https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml',
+    'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml',
+    'https://www.theguardian.com/culture/rss',
   ],
 }
 

@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   BookmarkPlus, BookmarkX, Clock, Brain, Zap, 
   SmilePlus, Frown, Meh, Volume2, VolumeX,
-  Eye, EyeOff, TrendingUp, AlertCircle
+  Eye, EyeOff, TrendingUp, AlertCircle, Share2, 
+  Twitter, Linkedin, Link2, Check, MessageCircle
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -32,6 +33,8 @@ export default function EnhancedNewsCard({
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [readProgress, setReadProgress] = useState(0)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [showShareMenu, setShowShareMenu] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     // Analyze article for sentiment and summary
@@ -73,6 +76,26 @@ export default function EnhancedNewsCard({
     }
     
     onBookmark?.(article)
+  }
+
+  const handleShare = async (platform: 'twitter' | 'linkedin' | 'copy') => {
+    const url = article.url
+    const title = article.title
+    
+    switch (platform) {
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank')
+        break
+      case 'linkedin':
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank')
+        break
+      case 'copy':
+        await navigator.clipboard.writeText(url)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+        break
+    }
+    setShowShareMenu(false)
   }
 
   const highlightImportantWords = (text: string) => {
@@ -130,6 +153,60 @@ export default function EnhancedNewsCard({
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Share Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowShareMenu(!showShareMenu)}
+              className="p-1 rounded text-gray-500 hover:text-cyber-blue transition-colors"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+            
+            {/* Share Menu Dropdown */}
+            <AnimatePresence>
+              {showShareMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="absolute right-0 top-8 bg-cyber-dark border border-cyber-blue/30 rounded-lg shadow-xl p-2 z-50 min-w-[140px]"
+                >
+                  <button
+                    onClick={() => handleShare('twitter')}
+                    className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-cyber-blue/10 transition-colors text-left"
+                  >
+                    <Twitter className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm">Twitter</span>
+                  </button>
+                  <button
+                    onClick={() => handleShare('linkedin')}
+                    className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-cyber-blue/10 transition-colors text-left"
+                  >
+                    <Linkedin className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm">LinkedIn</span>
+                  </button>
+                  <button
+                    onClick={() => handleShare('copy')}
+                    className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-cyber-blue/10 transition-colors text-left"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span className="text-sm text-green-500">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Link2 className="w-4 h-4" />
+                        <span className="text-sm">Copy Link</span>
+                      </>
+                    )}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          
+          {/* Bookmark Button */}
           <button
             onClick={handleBookmark}
             className={`p-1 rounded transition-colors ${

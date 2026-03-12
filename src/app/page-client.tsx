@@ -257,15 +257,15 @@ export default function HomePageClient() {
                 <div className="pulse-dot absolute -top-1 -right-1"></div>
               </div>
               <div>
-                <h1 className="text-2xl font-bold font-cyber text-gradient">
-                  GLOBAL PULSE
+                <h1 className="text-2xl font-bold font-cyber text-gradient hidden sm:block">
+                  Global Pulse
                 </h1>
-                <p className="text-xs text-gray-400 font-mono">Hear the world.</p>
+                <p className="text-xs text-gray-400 hidden sm:block">Live Intelligence</p>
               </div>
             </motion.div>
-
-            <div className="flex items-center space-x-4">
-              {/* Offline Indicator */}
+            
+            {/* Right Section - Simplified */}
+            <div className="flex items-center space-x-2">
               {!isOnline && (
                 <div className="flex items-center space-x-2 px-3 py-1 bg-cyber-red/20 border border-cyber-red/50 rounded-lg text-cyber-red text-sm">
                   <WifiOff className="w-4 h-4" />
@@ -275,57 +275,16 @@ export default function HomePageClient() {
               
               <LiveIndicator count={totalResults} />
               
-              {/* Dashboard Customizer */}
-              <button
-                onClick={() => setShowDashboardCustomizer(!showDashboardCustomizer)}
-                className={`cyber-button flex items-center space-x-2 ${showDashboardCustomizer ? 'bg-cyber-green/20 border-cyber-green' : ''}`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span className="hidden sm:inline">Layout</span>
-              </button>
-              
-              {/* Reading Goals */}
-              <button
-                onClick={() => {
-                  const dailyGoal = goals.find(g => g.type === 'daily')
-                  if (dailyGoal) {
-                    toast(`${dailyGoal.current}/${dailyGoal.target} articles today • ${streak} day streak!`)
-                  }
-                }}
-                className="cyber-button flex items-center space-x-2"
-              >
-                <Target className="w-4 h-4" />
-                <span className="hidden sm:inline">{streak}🔥</span>
-              </button>
-              
-              {/* Map Toggle */}
-              <button
-                onClick={() => setShowMap(!showMap)}
-                className={`cyber-button flex items-center space-x-2 ${showMap ? 'bg-cyber-green/20 border-cyber-green' : ''}`}
-              >
-                <Map className="w-4 h-4" />
-                <span className="hidden sm:inline">Map</span>
-              </button>
-              
-              {/* Performance Monitor Toggle */}
-              <button
-                onClick={() => setShowPerformance(!showPerformance)}
-                className={`cyber-button flex items-center space-x-2 ${showPerformance ? 'bg-cyber-blue/20 border-cyber-blue' : ''}`}
-              >
-                <Activity className="w-4 h-4" />
-                <span className="hidden sm:inline">Perf</span>
-              </button>
-              
-              {/* Analytics Button */}
+              {/* Analytics */}
               <button
                 onClick={() => setShowAnalytics(!showAnalytics)}
                 className={`cyber-button flex items-center space-x-2 ${showAnalytics ? 'bg-cyber-purple/20 border-cyber-purple' : ''}`}
               >
                 <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Stats</span>
+                <span className="hidden sm:inline">Analytics</span>
               </button>
               
-              {/* Bookmarks Button */}
+              {/* Bookmarks */}
               <button
                 onClick={() => setShowBookmarks(!showBookmarks)}
                 className={`cyber-button flex items-center space-x-2 ${showBookmarks ? 'bg-cyber-yellow/20 border-cyber-yellow' : ''}`}
@@ -334,26 +293,6 @@ export default function HomePageClient() {
                 <span className="hidden sm:inline">Saved</span>
               </button>
               
-              <button
-                onClick={() => requestPermission()}
-                className={`cyber-button flex items-center space-x-2 ${
-                  permission === 'granted' ? 'bg-cyber-green/10 border-cyber-green text-cyber-green' : ''
-                }`}
-              >
-                <Bell className="w-4 h-4" />
-                <span className="hidden sm:inline">
-                  {permission === 'granted' ? 'Notifications On' : 'Enable Alerts'}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setShowMap(!showMap)}
-                className="cyber-button flex items-center space-x-2"
-              >
-                <MapPin className="w-4 h-4" />
-                <span className="hidden sm:inline">Map</span>
-              </button>
-
               {/* Theme Toggle */}
               <ThemeToggle />
 
@@ -507,7 +446,7 @@ export default function HomePageClient() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
-            {/* Pulse Score */}
+            {/* Pulse Score Only */}
             {showPulseScore && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -518,41 +457,8 @@ export default function HomePageClient() {
               </motion.div>
             )}
 
-            {/* Map */}
-            {showMap && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="cyber-card"
-              >
-                <NewsMap articles={articles} />
-              </motion.div>
-            )}
-
-            {/* Newsletter */}
+            {/* Newsletter Only */}
             <NewsletterSubscription />
-
-            {/* Quick Stats */}
-            <div className="cyber-card">
-              <h2 className="text-lg font-bold font-cyber text-cyber-blue mb-3">
-                Quick Stats
-              </h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Stories</span>
-                  <span className="text-cyber-blue">{totalResults}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Sources</span>
-                  <span className="text-cyber-green">{new Set(articles.map(a => a.source.name)).size}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Reading Streak</span>
-                  <span className="text-cyber-yellow">{streak}🔥</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </main>

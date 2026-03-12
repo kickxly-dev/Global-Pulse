@@ -36,7 +36,13 @@ import { NightModeToggle, NightModeSettings, useNightMode } from '@/components/N
 import PushNotificationManager, { usePushNotifications } from '@/components/PushNotificationManager'
 import BreakingNewsBanner from '@/components/BreakingNewsBanner'
 import OfflineIndicator, { cacheArticles, getCachedArticles } from '@/components/OfflineIndicator'
-import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
+import ReadingMode from '@/components/ReadingMode'
+import ArticleComments from '@/components/ArticleComments'
+import SmartRecommendations from '@/components/SmartRecommendations'
+import QuickActions from '@/components/QuickActions'
+import ReadingTime from '@/components/ReadingTime'
+import AdvancedSearch from '@/components/AdvancedSearch'
+import { NewsCardSkeleton, HeroSkeleton, SidebarSkeleton, ArticleViewSkeleton, StatsSkeleton } from '@/components/LoadingSkeletons'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
 import { DashboardCustomizer, useDashboardCustomization } from '@/hooks/useDashboardCustomization'
@@ -78,6 +84,15 @@ export default function HomePageClient() {
   const [showPushNotifications, setShowPushNotifications] = useState(false)
   const [shareArticle, setShareArticle] = useState<any>(null)
   const [showBookmarksPanel, setShowBookmarksPanel] = useState(false)
+  const [readingModeArticle, setReadingModeArticle] = useState<any>(null)
+  const [commentsArticle, setCommentsArticle] = useState<any>(null)
+  const [showRecommendations, setShowRecommendations] = useState(false)
+  const [searchFilters, setSearchFilters] = useState({
+    dateRange: 'any' as 'any' | 'today' | 'week' | 'month',
+    sources: [] as string[],
+    sortBy: 'relevance' as 'relevance' | 'date' | 'popularity',
+    language: 'en',
+  })
   const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
@@ -711,6 +726,52 @@ export default function HomePageClient() {
       <OfflineIndicator
         isOnline={isOnline}
         onRetry={refresh}
+      />
+
+      {/* Reading Mode */}
+      <ReadingMode
+        article={readingModeArticle}
+        isOpen={!!readingModeArticle}
+        onClose={() => setReadingModeArticle(null)}
+      />
+
+      {/* Article Comments */}
+      <ArticleComments
+        article={commentsArticle}
+        isOpen={!!commentsArticle}
+        onClose={() => setCommentsArticle(null)}
+      />
+
+      {/* Smart Recommendations */}
+      <SmartRecommendations
+        currentArticle={fullArticleView}
+        allArticles={articles}
+        onArticleClick={(article) => {
+          setFullArticleView(article)
+          setShowRecommendations(true)
+        }}
+        isVisible={showRecommendations}
+        onClose={() => setShowRecommendations(false)}
+      />
+
+      {/* Quick Actions Floating Button */}
+      <QuickActions
+        onReadingMode={() => fullArticleView && setReadingModeArticle(fullArticleView)}
+        onComments={() => fullArticleView && setCommentsArticle(fullArticleView)}
+        onShare={() => fullArticleView && setShareArticle(fullArticleView)}
+        onBookmark={() => {
+          if (fullArticleView) {
+            const isBookmarked = toggleBookmark(fullArticleView)
+            toast.success(isBookmarked ? 'Bookmarked!' : 'Removed from bookmarks')
+          }
+        }}
+        isBookmarked={fullArticleView ? isArticleBookmarked(fullArticleView.id) : false}
+        onSearch={() => {
+          const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement
+          searchInput?.focus()
+        }}
+        onThemeToggle={() => {}}
+        isDarkMode={true}
       />
     </div>
   )

@@ -15,7 +15,7 @@ export function useNewsData({
   country = 'us',
   query = '',
   autoRefresh = true,
-  refreshInterval = 10000, // 10 seconds for more frequent updates
+  refreshInterval = 60000, // 60 seconds - more reasonable rate
 }: UseNewsDataParams) {
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)

@@ -119,7 +119,17 @@ export default function EnhancedNewsCard({
     return (now - publishedTime) < (2 * 60 * 60 * 1000) // 2 hours
   }
 
-  if (!analysis) return null
+  // Always render, even without analysis
+  const safeAnalysis = analysis || {
+    sentiment: 'neutral' as Sentiment,
+    mood: 'neutral',
+    confidence: 0.75,
+    readTime: 3,
+    summary: article.description || article.content?.slice(0, 200) || 'No summary available',
+    keywords: [],
+    topics: [],
+    entities: []
+  }
 
   return (
     <motion.div

@@ -18,8 +18,6 @@ export default function ArticleView({ article, allArticles, isOpen, onClose }: A
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [showRelated, setShowRelated] = useState(true)
 
-  if (!isOpen) return null
-
   const handleBookmark = () => {
     const bookmarks = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]')
     const exists = bookmarks.find((b: any) => b.id === article.id)

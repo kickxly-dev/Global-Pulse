@@ -41,9 +41,15 @@ export default function EnhancedNewsCard({
     const result = analyzeArticle(article)
     setAnalysis(result)
 
-    // Check if bookmarked
-    const bookmarks = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]')
-    setIsBookmarked(bookmarks.some((b: any) => b.id === article.id))
+    // Check if bookmarked - safely
+    try {
+      if (typeof window !== 'undefined') {
+        const bookmarks = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]')
+        setIsBookmarked(bookmarks.some((b: any) => b.id === article.id))
+      }
+    } catch (e) {
+      console.error('Error accessing localStorage:', e)
+    }
   }, [article])
 
   const getSentimentIcon = (sentiment: Sentiment) => {
@@ -63,22 +69,30 @@ export default function EnhancedNewsCard({
   }
 
   const handleBookmark = () => {
-    const bookmarks = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]')
-    
-    if (isBookmarked) {
-      const filtered = bookmarks.filter((b: any) => b.id !== article.id)
-      localStorage.setItem('bookmarkedArticles', JSON.stringify(filtered))
-      setIsBookmarked(false)
-    } else {
-      bookmarks.push(article)
-      localStorage.setItem('bookmarkedArticles', JSON.stringify(bookmarks))
-      setIsBookmarked(true)
+    try {
+      if (typeof window === 'undefined') return
+      
+      const bookmarks = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]')
+      
+      if (isBookmarked) {
+        const filtered = bookmarks.filter((b: any) => b.id !== article.id)
+        localStorage.setItem('bookmarkedArticles', JSON.stringify(filtered))
+        setIsBookmarked(false)
+      } else {
+        bookmarks.push(article)
+        localStorage.setItem('bookmarkedArticles', JSON.stringify(bookmarks))
+        setIsBookmarked(true)
+      }
+    } catch (e) {
+      console.error('Error accessing localStorage:', e)
     }
     
     onBookmark?.(article)
   }
 
   const handleShare = async (platform: 'twitter' | 'linkedin' | 'copy') => {
+    if (typeof window === 'undefined') return
+    
     const url = article.url
     const title = article.title
     
@@ -90,9 +104,15 @@ export default function EnhancedNewsCard({
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank')
         break
       case 'copy':
-        await navigator.clipboard.writeText(url)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        try {
+          if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            await navigator.clipboard.writeText(url)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+          }
+        } catch (e) {
+          console.error('Failed to copy:', e)
+        }
         break
     }
     setShowShareMenu(false)

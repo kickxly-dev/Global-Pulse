@@ -154,13 +154,65 @@ export default function ModernArticleView({ article, allArticles, isOpen, onClos
               <div className="prose prose-invert max-w-none">
                 <div className="text-gray-300 leading-relaxed space-y-4 text-base">
                   {article.content ? (
-                    article.content.split('\n').map((paragraph, i) => (
-                      <p key={i} className="mb-4">{paragraph}</p>
-                    ))
-                  ) : (
+                    <>
+                      {article.content
+                        .replace(/\[\+\d+\s*chars\]$/g, '') // Remove "[+XXX chars]" truncation marker
+                        .split('\n')
+                        .filter(p => p.trim())
+                        .map((paragraph, i) => (
+                          <p key={i} className="mb-4 text-gray-300 leading-7">{paragraph}</p>
+                        ))}
+                      {article.content.includes('[+') && article.url && (
+                        <div className="mt-6 p-4 bg-cyber-blue/10 border border-cyber-blue/30 rounded-xl">
+                          <p className="text-sm text-gray-400 mb-3">
+                            This article has been truncated. Read the full article for complete content.
+                          </p>
+                          <a
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-cyber-blue text-white rounded-lg hover:bg-cyber-blue/80 transition-all"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Read Full Article
+                          </a>
+                        </div>
+                      )}
+                    </>
+                  ) : article.description ? (
                     <div className="space-y-4">
-                      <p className="text-lg">{article.description || 'Full article content not available.'}</p>
-                      <p>Please visit the original source to read the complete article.</p>
+                      <p className="text-lg text-gray-300 leading-7">{article.description}</p>
+                      <div className="mt-6 p-4 bg-white/5 border border-white/10 rounded-xl">
+                        <p className="text-sm text-gray-400 mb-3">
+                          Full article content not available in preview.
+                        </p>
+                        {article.url && (
+                          <a
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-cyber-blue text-white rounded-lg hover:bg-cyber-blue/80 transition-all"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Read Original Article
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+                      <p className="text-gray-400">Full article content not available.</p>
+                      {article.url && (
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-cyber-blue text-white rounded-lg hover:bg-cyber-blue/80 transition-all"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Visit Source
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

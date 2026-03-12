@@ -1,8 +1,16 @@
 import axios from 'axios'
 import { NewsArticle, NewsApiResponse } from '@/types/news'
+import { parseString } from 'xml2js'
 
-const NEWS_API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY
+const NEWS_API_KEY = process.env.NEWS_API_KEY || process.env.NEXT_PUBLIC_NEWS_API_KEY
 const NEWS_API_BASE_URL = 'https://newsapi.org/v2'
+
+// GDELT API (Free, no key required)
+const GDELT_API_URL = 'https://api.gdeltproject.org/api/v2/doc/doc'
+
+// Cache configuration
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+let newsCache: { [key: string]: { data: NewsApiResponse; timestamp: number } } = {}
 
 // Category mapping for NewsAPI
 const CATEGORY_MAP: Record<string, string> = {
@@ -18,6 +26,52 @@ const CATEGORY_MAP: Record<string, string> = {
 // Country codes supported by NewsAPI
 const SUPPORTED_COUNTRIES = ['us', 'gb', 'ca', 'au', 'de', 'fr', 'it', 'jp', 'in', 'cn', 'br', 'mx', 'ru', 'za', 'kr', 'es', 'nl', 'se', 'no', 'ch', 'ae', 'sg', 'nz', 'ar', 'eg', 'ng']
 
+// RSS Feed URLs for different categories
+const RSS_FEEDS: Record<string, string[]> = {
+  general: [
+    'https://feeds.bbci.co.uk/news/world/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+    'https://www.reuters.com/rssFeed/worldNews',
+  ],
+  technology: [
+    'https://feeds.bbci.co.uk/news/technology/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',
+    'https://www.wired.com/feed/rss',
+  ],
+  business: [
+    'https://feeds.bbci.co.uk/news/business/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',
+  ],
+  science: [
+    'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Science.xml',
+  ],
+  health: [
+    'https://feeds.bbci.co.uk/news/health/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Health.xml',
+  ],
+  sports: [
+    'https://feeds.bbci.co.uk/sport/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml',
+  ],
+  entertainment: [
+    'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml',
+  ],
+}
+
+// Cache key generator
+function getCacheKey(params: any): string {
+  return `${params.category || 'general'}-${params.country || 'us'}-${params.query || 'no-query'}`
+}
+
+// Check if cache is valid
+function isCacheValid(key: string): boolean {
+  const cached = newsCache[key]
+  if (!cached) return false
+  return Date.now() - cached.timestamp < CACHE_DURATION
+}
+
 export async function fetchTopHeadlines(params: {
   category?: string
   country?: string
@@ -26,62 +80,63 @@ export async function fetchTopHeadlines(params: {
 }): Promise<NewsApiResponse> {
   try {
     const { category = 'general', country = 'us', query, pageSize = 50 } = params
+    const cacheKey = getCacheKey(params)
 
-    // Validate country
-    const validCountry = SUPPORTED_COUNTRIES.includes(country) ? country : 'us'
-    
-    // Use NewsAPI for real news
-    if (NEWS_API_KEY && NEWS_API_KEY !== 'your_news_api_key_here') {
-      try {
-        let url = `${NEWS_API_BASE_URL}/top-headlines?country=${validCountry}&pageSize=${pageSize}&apiKey=${NEWS_API_KEY}`
-        
-        if (category && category !== 'general') {
-          url += `&category=${CATEGORY_MAP[category] || category}`
-        }
-        
-        if (query) {
-          url += `&q=${encodeURIComponent(query)}`
-        }
-
-        const response = await axios.get(url, { timeout: 10000 })
-        
-        if (response.data.status === 'ok') {
-          const articles = response.data.articles.map((item: any, index: number) => ({
-            id: item.url || `news-${index}-${Date.now()}`,
-            title: item.title || 'Untitled',
-            description: item.description || '',
-            url: item.url || '#',
-            urlToImage: item.urlToImage || null,
-            publishedAt: item.publishedAt || new Date().toISOString(),
-            source: {
-              id: item.source?.id || 'newsapi',
-              name: item.source?.name || 'News Source',
-            },
-            author: item.author || null,
-            content: item.content || item.description || '',
-            country: validCountry,
-            category: category,
-          }))
-
-          return {
-            status: 'ok',
-            totalResults: response.data.totalResults || articles.length,
-            articles,
-          }
-        }
-      } catch (apiError) {
-        console.warn('NewsAPI failed, falling back to RSS:', apiError)
-      }
+    // Check cache first
+    if (isCacheValid(cacheKey)) {
+      console.log('Returning cached news for:', cacheKey)
+      return newsCache[cacheKey].data
     }
 
-    // Fallback to sample articles with real content
-    return {
+    const allArticles: NewsArticle[] = []
+
+    // Try multiple sources in parallel
+    const [newsApiResults, gdeltResults, rssResults] = await Promise.allSettled([
+      fetchFromNewsAPI({ category, country, query, pageSize: Math.min(pageSize, 20) }),
+      fetchFromGDELT({ query: query || category, pageSize: Math.min(pageSize, 20) }),
+      fetchFromRSS(category, Math.min(pageSize, 15)),
+    ])
+
+    // Combine results from all sources
+    if (newsApiResults.status === 'fulfilled' && newsApiResults.value) {
+      allArticles.push(...newsApiResults.value)
+    }
+
+    if (gdeltResults.status === 'fulfilled' && gdeltResults.value) {
+      allArticles.push(...gdeltResults.value)
+    }
+
+    if (rssResults.status === 'fulfilled' && rssResults.value) {
+      allArticles.push(...rssResults.value)
+    }
+
+    // Remove duplicates based on URL
+    const uniqueArticles = removeDuplicates(allArticles)
+
+    // Sort by date (newest first)
+    uniqueArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+
+    // Take only requested page size
+    const limitedArticles = uniqueArticles.slice(0, pageSize)
+
+    const response: NewsApiResponse = {
       status: 'ok',
-      totalResults: 10,
-      articles: generateSampleArticles(params.category || 'general', params.pageSize || 10),
+      totalResults: limitedArticles.length,
+      articles: limitedArticles,
     }
+
+    // Cache the results
+    newsCache[cacheKey] = { data: response, timestamp: Date.now() }
+
+    return response
   } catch (error: any) {
-    console.error('Error fetching news:', error.message)
+    console.error('Error fetching real news:', error.message)
+    // Return cached data if available, even if expired
+    const cacheKey = getCacheKey(params)
+    if (newsCache[cacheKey]) {
+      return newsCache[cacheKey].data
+    }
+    // Last resort: return sample articles
     return {
       status: 'ok',
       totalResults: 10,
@@ -559,4 +614,194 @@ export function getArticleCategory(article: NewsArticle): 'breaking' | 'local' |
   }
   
   return 'personal'
+}
+
+// Fetch from NewsAPI
+async function fetchFromNewsAPI(params: {
+  category?: string
+  country?: string
+  query?: string
+  pageSize?: number
+}): Promise<NewsArticle[]> {
+  if (!NEWS_API_KEY || NEWS_API_KEY === 'your_news_api_key_here') {
+    console.log('No NewsAPI key available')
+    return []
+  }
+
+  try {
+    const { category = 'general', country = 'us', query, pageSize = 20 } = params
+    const validCountry = SUPPORTED_COUNTRIES.includes(country) ? country : 'us'
+
+    let url = `${NEWS_API_BASE_URL}/top-headlines?country=${validCountry}&pageSize=${pageSize}&apiKey=${NEWS_API_KEY}`
+
+    if (category && category !== 'general') {
+      url += `&category=${CATEGORY_MAP[category] || category}`
+    }
+
+    if (query) {
+      url += `&q=${encodeURIComponent(query)}`
+    }
+
+    const response = await axios.get(url, { timeout: 10000 })
+
+    if (response.data.status === 'ok' && response.data.articles) {
+      return response.data.articles.map((item: any, index: number) => ({
+        id: `newsapi-${index}-${Date.now()}`,
+        title: item.title || 'Untitled',
+        description: item.description || '',
+        url: item.url || '#',
+        urlToImage: item.urlToImage || null,
+        publishedAt: item.publishedAt || new Date().toISOString(),
+        source: {
+          id: item.source?.id || 'newsapi',
+          name: item.source?.name || 'News Source',
+        },
+        author: item.author || null,
+        content: item.content || item.description || '',
+        country: validCountry,
+        category: category,
+      }))
+    }
+
+    return []
+  } catch (error: any) {
+    console.warn('NewsAPI fetch failed:', error.message)
+    return []
+  }
+}
+
+// Fetch from GDELT (free, no API key needed)
+async function fetchFromGDELT(params: { query: string; pageSize?: number }): Promise<NewsArticle[]> {
+  try {
+    const { query, pageSize = 20 } = params
+
+    // GDELT uses a different query format
+    const gdeltQuery = query === 'general' ? 'world news' : query
+
+    const url = `${GDELT_API_URL}?query=${encodeURIComponent(gdeltQuery)}&mode=ArtList&maxrecords=${pageSize}&format=json`
+
+    const response = await axios.get(url, { timeout: 10000 })
+
+    if (response.data && response.data.articles) {
+      return response.data.articles.map((item: any, index: number) => ({
+        id: `gdelt-${index}-${Date.now()}`,
+        title: item.title || 'Untitled',
+        description: item.seen || item.title || '',
+        url: item.url || '#',
+        urlToImage: null,
+        publishedAt: item.seendate ? new Date(item.seendate).toISOString() : new Date().toISOString(),
+        source: {
+          id: 'gdelt',
+          name: item.domain || 'GDELT News',
+        },
+        author: null,
+        content: item.seen || item.title || '',
+        country: 'us',
+        category: 'general',
+      }))
+    }
+
+    return []
+  } catch (error: any) {
+    console.warn('GDELT fetch failed:', error.message)
+    return []
+  }
+}
+
+// Fetch from RSS feeds
+async function fetchFromRSS(category: string, pageSize: number): Promise<NewsArticle[]> {
+  try {
+    const feeds = RSS_FEEDS[category] || RSS_FEEDS.general
+    const articles: NewsArticle[] = []
+
+    // Fetch from each RSS feed
+    const fetchPromises = feeds.map(async (feedUrl, feedIndex) => {
+      try {
+        const response = await axios.get(feedUrl, {
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; GlobalPulse/1.0)',
+          },
+        })
+
+        const xmlData = response.data
+
+        // Parse XML
+        return new Promise<NewsArticle[]>((resolve) => {
+          parseString(xmlData, { explicitArray: false }, (err: any, result: any) => {
+            if (err || !result) {
+              resolve([])
+              return
+            }
+
+            const items = result.rss?.channel?.item || []
+            const parsedItems = Array.isArray(items) ? items : [items]
+
+            const parsed = parsedItems.slice(0, 5).map((item: any, index: number) => ({
+              id: `rss-${feedIndex}-${index}-${Date.now()}`,
+              title: item.title || 'Untitled',
+              description: item.description || item.summary || '',
+              url: item.link || '#',
+              urlToImage: extractImageFromRSS(item),
+              publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+              source: {
+                id: 'rss',
+                name: result.rss?.channel?.title || 'RSS Feed',
+              },
+              author: item.author || null,
+              content: item['content:encoded'] || item.description || '',
+              country: 'us',
+              category: category,
+            }))
+
+            resolve(parsed)
+          })
+        })
+      } catch (error) {
+        console.warn(`RSS fetch failed for ${feedUrl}:`, error)
+        return []
+      }
+    })
+
+    const results = await Promise.all(fetchPromises)
+    results.forEach((result) => articles.push(...result))
+
+    return articles.slice(0, pageSize)
+  } catch (error: any) {
+    console.warn('RSS fetch failed:', error.message)
+    return []
+  }
+}
+
+// Extract image URL from RSS item
+function extractImageFromRSS(item: any): string | null {
+  // Try media:content
+  if (item['media:content']?.$.url) {
+    return item['media:content'].$.url
+  }
+  // Try enclosure
+  if (item.enclosure?.$.url) {
+    return item.enclosure.$.url
+  }
+  // Try to extract from description
+  if (item.description) {
+    const imgMatch = item.description.match(/<img[^>]+src="([^"]+)"/)
+    if (imgMatch) {
+      return imgMatch[1]
+    }
+  }
+  return null
+}
+
+// Remove duplicate articles based on URL
+function removeDuplicates(articles: NewsArticle[]): NewsArticle[] {
+  const seen = new Set<string>()
+  return articles.filter((article) => {
+    const url = article.url?.split('?')[0] // Remove query params for comparison
+    if (!url || seen.has(url)) {
+      return false
+    }
+    seen.add(url)
+    return true
+  })
 }

@@ -108,11 +108,11 @@ export default function ModernNewsCard({ article, index, onRead, onBookmark }: M
             
             <button
               onClick={() => {
-                if (navigator.share) {
+                if (typeof navigator !== 'undefined' && navigator.share) {
                   navigator.share({
                     title: article.title,
                     text: article.description || '',
-                    url: article.url || window.location.href,
+                    url: article.url || (typeof window !== 'undefined' ? window.location.href : ''),
                   })
                 }
               }}

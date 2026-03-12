@@ -24,11 +24,11 @@ export default function ModernArticleView({ article, allArticles, isOpen, onClos
   }
 
   const handleShare = async () => {
-    if (navigator.share) {
+    if (typeof navigator !== 'undefined' && navigator.share) {
       await navigator.share({
         title: article.title,
         text: article.description || '',
-        url: article.url || window.location.href,
+        url: article.url || (typeof window !== 'undefined' ? window.location.href : ''),
       })
     }
   }

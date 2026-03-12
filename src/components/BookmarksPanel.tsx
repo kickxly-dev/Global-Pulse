@@ -6,13 +6,50 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Bookmark, Trash2, ExternalLink, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
-interface BookmarksPanelProps {
-  onClose?: () => void
+// Helper function to check if article is bookmarked
+export function isArticleBookmarked(articleId: string): boolean {
+  try {
+    if (typeof window === 'undefined') return false
+    const saved = localStorage.getItem('bookmarkedArticles')
+    if (!saved) return false
+    const bookmarks = JSON.parse(saved)
+    return bookmarks.some((b: NewsArticle) => b.id === articleId)
+  } catch (e) {
+    return false
+  }
 }
 
-export default function BookmarksPanel({ onClose }: BookmarksPanelProps) {
+// Helper function to toggle bookmark
+export function toggleBookmark(article: NewsArticle): boolean {
+  try {
+    if (typeof window === 'undefined') return false
+    const saved = localStorage.getItem('bookmarkedArticles')
+    const bookmarks: NewsArticle[] = saved ? JSON.parse(saved) : []
+    
+    const index = bookmarks.findIndex(b => b.id === article.id)
+    if (index >= 0) {
+      bookmarks.splice(index, 1)
+      localStorage.setItem('bookmarkedArticles', JSON.stringify(bookmarks))
+      return false // Removed
+    } else {
+      bookmarks.unshift(article)
+      localStorage.setItem('bookmarkedArticles', JSON.stringify(bookmarks))
+      return true // Added
+    }
+  } catch (e) {
+    console.error('Error toggling bookmark:', e)
+    return false
+  }
+}
+
+interface BookmarksPanelProps {
+  isOpen: boolean
+  onClose: () => void
+  onArticleClick?: (article: NewsArticle) => void
+}
+
+export default function BookmarksPanel({ isOpen, onClose, onArticleClick }: BookmarksPanelProps) {
   const [bookmarks, setBookmarks] = useState<NewsArticle[]>([])
-  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     try {

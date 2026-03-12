@@ -13,7 +13,8 @@ import PulsePredict from '@/components/PulsePredict'
 import DJMode from '@/components/DJMode'
 import ReadingModes, { ZenModeOverlay } from '@/components/ReadingModes'
 import EnhancedNewsCard from '@/components/EnhancedNewsCard'
-import BookmarksPanel from '@/components/BookmarksPanel'
+import ShareModal from '@/components/ShareModal'
+import BookmarksPanel, { toggleBookmark, isArticleBookmarked } from '@/components/BookmarksPanel'
 import UserMenu from '@/components/UserMenu'
 import ThemeToggle from '@/components/ThemeToggle'
 import MobileNav from '@/components/MobileNav'
@@ -75,6 +76,8 @@ export default function HomePageClient() {
   const [voiceArticle, setVoiceArticle] = useState<any>(null)
   const [showNightModeSettings, setShowNightModeSettings] = useState(false)
   const [showPushNotifications, setShowPushNotifications] = useState(false)
+  const [shareArticle, setShareArticle] = useState<any>(null)
+  const [showBookmarksPanel, setShowBookmarksPanel] = useState(false)
   const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
@@ -301,7 +304,7 @@ export default function HomePageClient() {
               
               {/* Bookmarks */}
               <button
-                onClick={() => setShowBookmarks(!showBookmarks)}
+                onClick={() => setShowBookmarksPanel(true)}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-all ${showBookmarks ? 'bg-cyber-yellow/20 border-cyber-yellow text-cyber-yellow' : 'bg-white/5 border-white/10 text-gray-300 hover:border-cyber-yellow/50'}`}
               >
                 <Bookmark className="w-4 h-4" />
@@ -469,6 +472,8 @@ export default function HomePageClient() {
                       }
                     }}
                     onBookmark={(a) => {
+                      const added = toggleBookmark(a)
+                      toast.success(added ? 'Article bookmarked!' : 'Bookmark removed')
                       try {
                         if (typeof window !== 'undefined') {
                           const saved = localStorage.getItem('bookmarkedArticles')
@@ -478,6 +483,7 @@ export default function HomePageClient() {
                         console.error('Error loading bookmarks:', e)
                       }
                     }}
+                    onShare={(a) => setShareArticle(a)}
                   />
                 ))}
               </div>
@@ -645,6 +651,23 @@ export default function HomePageClient() {
 
       {/* Admin Panel - Secret: Ctrl+Shift+A */}
       <AdminPanel />
+
+      {/* Share Modal */}
+      <ShareModal
+        article={shareArticle}
+        isOpen={!!shareArticle}
+        onClose={() => setShareArticle(null)}
+      />
+
+      {/* Bookmarks Panel */}
+      <BookmarksPanel
+        isOpen={showBookmarksPanel}
+        onClose={() => setShowBookmarksPanel(false)}
+        onArticleClick={(article) => {
+          setFullArticleView(article)
+          setShowBookmarksPanel(false)
+        }}
+      />
 
       {/* Full Article View - Modern */}
       <ModernArticleView

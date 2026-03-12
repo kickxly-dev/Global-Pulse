@@ -19,6 +19,7 @@ interface EnhancedNewsCardProps {
   speedReadMode: boolean
   onRead?: (article: NewsArticle) => void
   onBookmark?: (article: NewsArticle) => void
+  onShare?: (article: NewsArticle) => void
 }
 
 export default function EnhancedNewsCard({ 
@@ -27,7 +28,8 @@ export default function EnhancedNewsCard({
   tldrMode,
   speedReadMode,
   onRead,
-  onBookmark
+  onBookmark,
+  onShare
 }: EnhancedNewsCardProps) {
   const [analysis, setAnalysis] = useState<any>(null)
   const [isBookmarked, setIsBookmarked] = useState(false)
@@ -243,6 +245,14 @@ export default function EnhancedNewsCard({
             }`}
           >
             {isBookmarked ? <BookmarkX className="w-4 h-4" /> : <BookmarkPlus className="w-4 h-4" />}
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={() => onShare?.(article)}
+            className="p-1 rounded transition-colors text-gray-500 hover:text-cyber-blue"
+          >
+            <Share2 className="w-4 h-4" />
           </button>
         </div>
       </div>

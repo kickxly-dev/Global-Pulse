@@ -24,6 +24,8 @@ import NewsletterSubscription from '@/components/NewsletterSubscription'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import AdminPanel from '@/components/AdminPanel'
 import ArticleView from '@/components/ArticleView'
+import ModernNewsCard from '@/components/ModernNewsCard'
+import ModernArticleView from '@/components/ModernArticleView'
 import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -425,22 +427,44 @@ export default function HomePageClient() {
                 ))}
               </div>
             ) : (
-              <NewsFeed 
-                articles={articles}
-                loading={loading}
-                error={error}
-                onRefresh={refresh}
-                onRead={(a) => {
-                  setFullArticleView(a)
-                  if (zenMode) {
-                    setSelectedZenArticle(a)
-                  }
-                }}
-                onBookmark={(a) => {
-                  const saved = localStorage.getItem('bookmarkedArticles')
-                  setBookmarkedArticles(saved ? JSON.parse(saved) : [])
-                }}
-              />
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-cyber-blue to-cyber-purple bg-clip-text text-transparent">
+                    Latest News
+                  </h2>
+                  <span className="text-gray-400 text-sm">
+                    {articles.length} stories
+                  </span>
+                </div>
+                
+                {/* Modern Grid Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {articles.map((article, index) => (
+                    <ModernNewsCard
+                      key={article.id}
+                      article={article}
+                      index={index}
+                      onRead={(a) => {
+                        setFullArticleView(a)
+                        if (zenMode) {
+                          setSelectedZenArticle(a)
+                        }
+                      }}
+                      onBookmark={(a) => {
+                        const saved = localStorage.getItem('bookmarkedArticles')
+                        setBookmarkedArticles(saved ? JSON.parse(saved) : [])
+                      }}
+                    />
+                  ))}
+                </div>
+                
+                {/* Load More Trigger */}
+                {hasMore && (
+                  <div ref={loaderRef} className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber-blue" />
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -561,12 +585,15 @@ export default function HomePageClient() {
       {/* Admin Panel - Secret: Ctrl+Shift+A */}
       <AdminPanel />
 
-      {/* Full Article View */}
-      <ArticleView
+      {/* Full Article View - Modern */}
+      <ModernArticleView
         article={fullArticleView}
         allArticles={articles}
         isOpen={!!fullArticleView}
         onClose={() => setFullArticleView(null)}
+        onArticleClick={(article) => {
+          setFullArticleView(article)
+        }}
       />
     </div>
   )

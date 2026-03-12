@@ -45,11 +45,15 @@ export default function ArticleReactions({ articleId, onReaction }: ArticleReact
     if (saved) {
       try {
         const data = JSON.parse(saved)
-        setReactions(data.reactions || reactions)
+        if (data.reactions) {
+          setReactions(data.reactions)
+        }
       } catch (e) {
         console.error('Failed to load reactions:', e)
       }
     }
+    // Only run when articleId changes, not when reactions change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articleId])
 
   const handleReaction = (type: ReactionType) => {

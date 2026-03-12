@@ -36,7 +36,7 @@ import { useSearchHistory } from '@/hooks/useSearchHistory'
 import { usePersonalization } from '@/hooks/usePersonalization'
 import { useReadingGoals } from '@/hooks/useReadingGoals'
 import { useThemeSchedule } from '@/hooks/useThemeSchedule'
-import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, LayoutDashboard, Target, Rss } from 'lucide-react'
+import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, LayoutDashboard, Target, Rss, X } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -274,6 +274,38 @@ export default function HomePageClient() {
               
               <LiveIndicator count={totalResults} />
               
+              {/* Dashboard Customizer */}
+              <button
+                onClick={() => setShowDashboardCustomizer(!showDashboardCustomizer)}
+                className={`cyber-button flex items-center space-x-2 ${showDashboardCustomizer ? 'bg-cyber-green/20 border-cyber-green' : ''}`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span className="hidden sm:inline">Layout</span>
+              </button>
+              
+              {/* Reading Goals */}
+              <button
+                onClick={() => {
+                  const dailyGoal = goals.find(g => g.type === 'daily')
+                  if (dailyGoal) {
+                    toast(`${dailyGoal.current}/${dailyGoal.target} articles today • ${streak} day streak!`)
+                  }
+                }}
+                className="cyber-button flex items-center space-x-2"
+              >
+                <Target className="w-4 h-4" />
+                <span className="hidden sm:inline">{streak}🔥</span>
+              </button>
+              
+              {/* Performance Monitor Toggle */}
+              <button
+                onClick={() => setShowPerformance(!showPerformance)}
+                className={`cyber-button flex items-center space-x-2 ${showPerformance ? 'bg-cyber-blue/20 border-cyber-blue' : ''}`}
+              >
+                <Activity className="w-4 h-4" />
+                <span className="hidden sm:inline">Perf</span>
+              </button>
+              
               {/* Analytics Button */}
               <button
                 onClick={() => setShowAnalytics(!showAnalytics)}
@@ -363,7 +395,10 @@ export default function HomePageClient() {
       {/* Search Bar */}
       <div className="container mx-auto px-4 py-4">
         <SearchBar 
-          onSearch={setSearchQuery}
+          onSearch={(query) => {
+            setSearchQuery(query)
+            addSearch(query)
+          }}
           onCountryChange={setCountry}
           currentCountry={country}
         />
@@ -535,6 +570,46 @@ export default function HomePageClient() {
             {/* Trending Topics */}
             <TrendingTopics articles={articles} />
 
+            {/* Search History & Trending */}
+            <div className="cyber-card">
+              <h2 className="text-lg font-bold font-cyber text-cyber-blue mb-4">
+                Search Trends
+              </h2>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Recent Searches</p>
+                  <div className="space-y-1">
+                    {getRecent(3).map((item, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSearchQuery(item.query)}
+                        className="text-xs text-gray-400 hover:text-cyber-blue"
+                      >
+                        {item.query}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Trending Now</p>
+                  <div className="space-y-1">
+                    {getTrending(3).map((item, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSearchQuery(item.query)}
+                        className="text-xs text-cyber-yellow hover:text-cyber-yellow/80"
+                      >
+                        {item.query}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Newsletter Subscription */}
+            <NewsletterSubscription />
+
             {/* Top Sources */}
             <div className="cyber-card">
               <h2 className="text-lg font-bold font-cyber text-cyber-yellow mb-4">
@@ -572,6 +647,81 @@ export default function HomePageClient() {
           onClose={() => setSelectedZenArticle(null)}
         />
       )}
+
+      {/* Dashboard Customizer */}
+      <AnimatePresence>
+        {showDashboardCustomizer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowDashboardCustomizer(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="max-w-md w-full"
+            >
+              <DashboardCustomizer
+                widgets={widgets}
+                onToggle={toggleWidget}
+                onReorder={reorderWidgets}
+                onReset={resetToDefaults}
+                onClose={() => setShowDashboardCustomizer(false)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Performance Monitor */}
+      <PerformanceMonitor show={showPerformance} />
+
+      {/* Related Articles for selected article */}
+      <AnimatePresence>
+        {selectedArticle && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedArticle(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-cyber-dark border border-cyber-blue/30 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-cyber-blue">{selectedArticle.title}</h2>
+                <button
+                  onClick={() => setSelectedArticle(null)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-gray-300">{selectedArticle.description}</p>
+              </div>
+              
+              <ArticleReactions articleId={selectedArticle.id} />
+              
+              <RelatedArticles
+                article={selectedArticle}
+                allArticles={articles}
+                onArticleClick={(article) => setSelectedArticle(article)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

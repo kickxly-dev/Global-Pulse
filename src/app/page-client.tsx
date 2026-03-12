@@ -29,6 +29,8 @@ import ModernArticleView from '@/components/ModernArticleView'
 import AISummaryPanel from '@/components/AISummaryPanel'
 import TrendingTopicsTicker from '@/components/TrendingTopicsTicker'
 import SmartSearch from '@/components/SmartSearch'
+import VoiceNarrator from '@/components/VoiceNarrator'
+import ReadingProgressTracker from '@/components/ReadingProgressTracker'
 import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -66,6 +68,7 @@ export default function HomePageClient() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [fullArticleView, setFullArticleView] = useState<any>(null)
   const [aiSummaryArticle, setAiSummaryArticle] = useState<any>(null)
+  const [voiceArticle, setVoiceArticle] = useState<any>(null)
   const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
@@ -463,6 +466,9 @@ export default function HomePageClient() {
                         const saved = localStorage.getItem('bookmarkedArticles')
                         setBookmarkedArticles(saved ? JSON.parse(saved) : [])
                       }}
+                      onAiSummary={(a) => {
+                        setAiSummaryArticle(a)
+                      }}
                     />
                   ))}
                 </div>
@@ -479,7 +485,7 @@ export default function HomePageClient() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
-            {/* Pulse Score Only */}
+            {/* Pulse Score */}
             {showPulseScore && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -490,7 +496,10 @@ export default function HomePageClient() {
               </motion.div>
             )}
 
-            {/* Newsletter Only */}
+            {/* Reading Progress Tracker */}
+            <ReadingProgressTracker />
+
+            {/* Newsletter */}
             <NewsletterSubscription />
           </div>
         </div>
@@ -610,6 +619,13 @@ export default function HomePageClient() {
         article={aiSummaryArticle}
         isOpen={!!aiSummaryArticle}
         onClose={() => setAiSummaryArticle(null)}
+      />
+
+      {/* Voice Narrator */}
+      <VoiceNarrator
+        text={voiceArticle?.content || voiceArticle?.description || ''}
+        isOpen={!!voiceArticle}
+        onClose={() => setVoiceArticle(null)}
       />
     </div>
   )

@@ -65,6 +65,19 @@ export default function AdminPanel() {
     }
   }, [isAuthenticated])
 
+  const generateSampleArticles = () => {
+    const sampleArticles: Article[] = Array.from({ length: 20 }, (_, i) => ({
+      id: `article-${i}`,
+      title: `Sample News Article ${i + 1}`,
+      description: `This is a sample description for article ${i + 1}...`,
+      source: { name: ['CNN', 'BBC', 'Reuters', 'AP News'][i % 4] },
+      publishedAt: new Date(Date.now() - i * 3600000).toISOString(),
+      category: ['general', 'technology', 'business', 'health'][i % 4],
+      url: `https://example.com/article-${i}`,
+    }))
+    setArticles(sampleArticles)
+  }
+
   const loadAdminData = () => {
     // Simulate admin data loading
     setStats({
@@ -78,27 +91,24 @@ export default function AdminPanel() {
       uptime: `${Math.floor(Math.random() * 30) + 1} days`,
     })
 
-    // Load articles from localStorage
+    // Load articles from localStorage with error handling
     try {
       const saved = localStorage.getItem('cachedArticles')
       if (saved) {
-        const parsed = JSON.parse(saved)
-        setArticles(Array.isArray(parsed) ? parsed.slice(0, 50) : [])
+        try {
+          const parsed = JSON.parse(saved)
+          setArticles(Array.isArray(parsed) ? parsed.slice(0, 50) : [])
+        } catch (parseError) {
+          console.error('Failed to parse cached articles:', parseError)
+          setArticles([])
+        }
       } else {
-        // Generate sample articles
-        const sampleArticles: Article[] = Array.from({ length: 20 }, (_, i) => ({
-          id: `article-${i}`,
-          title: `Sample News Article ${i + 1}`,
-          description: `This is a sample description for article ${i + 1}...`,
-          source: { name: ['CNN', 'BBC', 'Reuters', 'AP News'][i % 4] },
-          publishedAt: new Date(Date.now() - i * 3600000).toISOString(),
-          category: ['general', 'technology', 'business', 'health'][i % 4],
-          url: `https://example.com/article-${i}`,
-        }))
-        setArticles(sampleArticles)
+        // Generate sample articles if no cached data
+        generateSampleArticles()
       }
     } catch (e) {
-      console.error('Failed to load articles:', e)
+      console.error('localStorage access error:', e)
+      generateSampleArticles()
     }
 
     // Add some logs

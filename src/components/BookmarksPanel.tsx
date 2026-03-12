@@ -15,29 +15,45 @@ export default function BookmarksPanel({ onClose }: BookmarksPanelProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    const saved = localStorage.getItem('bookmarkedArticles')
-    if (saved) {
-      setBookmarks(JSON.parse(saved))
-    }
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('bookmarkedArticles')
+        if (saved) {
+          setBookmarks(JSON.parse(saved))
+        }
 
-    // Listen for storage changes
-    const handleStorage = () => {
-      const updated = localStorage.getItem('bookmarkedArticles')
-      setBookmarks(updated ? JSON.parse(updated) : [])
+        // Listen for storage changes
+        const handleStorage = () => {
+          const updated = localStorage.getItem('bookmarkedArticles')
+          setBookmarks(updated ? JSON.parse(updated) : [])
+        }
+        window.addEventListener('storage', handleStorage)
+        return () => window.removeEventListener('storage', handleStorage)
+      }
+    } catch (e) {
+      console.error('Error accessing localStorage:', e)
     }
-    window.addEventListener('storage', handleStorage)
-    return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
   const removeBookmark = (articleId: string) => {
-    const filtered = bookmarks.filter(b => b.id !== articleId)
-    localStorage.setItem('bookmarkedArticles', JSON.stringify(filtered))
-    setBookmarks(filtered)
+    try {
+      if (typeof window === 'undefined') return
+      const filtered = bookmarks.filter(b => b.id !== articleId)
+      localStorage.setItem('bookmarkedArticles', JSON.stringify(filtered))
+      setBookmarks(filtered)
+    } catch (e) {
+      console.error('Error removing bookmark:', e)
+    }
   }
 
   const clearAllBookmarks = () => {
-    localStorage.removeItem('bookmarkedArticles')
-    setBookmarks([])
+    try {
+      if (typeof window === 'undefined') return
+      localStorage.removeItem('bookmarkedArticles')
+      setBookmarks([])
+    } catch (e) {
+      console.error('Error clearing bookmarks:', e)
+    }
   }
 
   return (

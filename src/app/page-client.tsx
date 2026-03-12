@@ -31,6 +31,9 @@ import TrendingTopicsTicker from '@/components/TrendingTopicsTicker'
 import SmartSearch from '@/components/SmartSearch'
 import VoiceNarrator from '@/components/VoiceNarrator'
 import ReadingProgressTracker from '@/components/ReadingProgressTracker'
+import { NightModeToggle, NightModeSettings, useNightMode } from '@/components/NightMode'
+import PushNotificationManager, { usePushNotifications } from '@/components/PushNotificationManager'
+import OfflineIndicator, { cacheArticles, getCachedArticles } from '@/components/OfflineIndicator'
 import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -69,6 +72,8 @@ export default function HomePageClient() {
   const [fullArticleView, setFullArticleView] = useState<any>(null)
   const [aiSummaryArticle, setAiSummaryArticle] = useState<any>(null)
   const [voiceArticle, setVoiceArticle] = useState<any>(null)
+  const [showNightModeSettings, setShowNightModeSettings] = useState(false)
+  const [showPushNotifications, setShowPushNotifications] = useState(false)
   const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
@@ -304,6 +309,26 @@ export default function HomePageClient() {
               
               {/* Theme Toggle */}
               <ThemeToggle />
+
+              {/* Night Mode Toggle */}
+              <button
+                onClick={() => setShowNightModeSettings(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:border-indigo-500/50 hover:text-indigo-400 transition-all"
+                title="Night Mode Settings"
+              >
+                <Moon className="w-4 h-4" />
+                <span className="hidden sm:inline text-sm">Night</span>
+              </button>
+
+              {/* Push Notifications */}
+              <button
+                onClick={() => setShowPushNotifications(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:border-cyber-green/50 hover:text-cyber-green transition-all"
+                title="Push Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="hidden sm:inline text-sm">Alerts</span>
+              </button>
 
               {/* Settings */}
               <button
@@ -632,6 +657,24 @@ export default function HomePageClient() {
         text={voiceArticle?.content || voiceArticle?.description || ''}
         isOpen={!!voiceArticle}
         onClose={() => setVoiceArticle(null)}
+      />
+
+      {/* Night Mode Settings */}
+      <NightModeSettings
+        isOpen={showNightModeSettings}
+        onClose={() => setShowNightModeSettings(false)}
+      />
+
+      {/* Push Notifications Manager */}
+      <PushNotificationManager
+        isOpen={showPushNotifications}
+        onClose={() => setShowPushNotifications(false)}
+      />
+
+      {/* Offline Indicator */}
+      <OfflineIndicator
+        isOnline={isOnline}
+        onRetry={refresh}
       />
     </div>
   )

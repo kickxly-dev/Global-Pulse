@@ -18,15 +18,25 @@ import UserMenu from '@/components/UserMenu'
 import ThemeToggle from '@/components/ThemeToggle'
 import MobileNav from '@/components/MobileNav'
 import AnalyticsDashboard from '@/components/AnalyticsDashboard'
+import RelatedArticles from '@/components/RelatedArticles'
+import ArticleReactions from '@/components/ArticleReactions'
+import NewsletterSubscription from '@/components/NewsletterSubscription'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
+import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
+import { DashboardCustomizer, useDashboardCustomization } from '@/hooks/useDashboardCustomization'
 import { getGlobalMood } from '@/lib/aiAnalysis'
 import { useVoiceControl } from '@/hooks/useVoiceControl'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 import { useOfflineMode } from '@/hooks/useOfflineMode'
 import { useBreakingNewsNotifications } from '@/hooks/useBreakingNewsNotifications'
 import { useAnalytics } from '@/hooks/useAnalytics'
-import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff } from 'lucide-react'
+import { useSearchHistory } from '@/hooks/useSearchHistory'
+import { usePersonalization } from '@/hooks/usePersonalization'
+import { useReadingGoals } from '@/hooks/useReadingGoals'
+import { useThemeSchedule } from '@/hooks/useThemeSchedule'
+import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, LayoutDashboard, Target, Rss } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -44,6 +54,9 @@ export default function HomePageClient() {
   const [showPulsePredict, setShowPulsePredict] = useState(true)
   const [showBookmarks, setShowBookmarks] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
+  const [showDashboardCustomizer, setShowDashboardCustomizer] = useState(false)
+  const [showPerformance, setShowPerformance] = useState(false)
+  const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
@@ -75,8 +88,23 @@ export default function HomePageClient() {
   // Analytics
   const { stats: analyticsStats, trackArticleRead } = useAnalytics()
   
+  // Search History
+  const { addSearch, getRecent, getTrending } = useSearchHistory()
+  
+  // Personalization
+  const { trackInteraction, getRecommendedArticles, getTopCategories } = usePersonalization()
+  
+  // Reading Goals
+  const { goals, streak, updateGoal, getProgress } = useReadingGoals()
+  
+  // Dashboard Customization
+  const { widgets, toggleWidget, reorderWidgets, resetToDefaults, getEnabledWidgets } = useDashboardCustomization()
+  
   const { permission, requestPermission } = useNotifications()
   const { theme, changeTheme } = useTheme()
+  
+  // Theme Scheduling
+  useThemeSchedule(theme, (t: string) => changeTheme(t as any))
 
   const categories = [
     { id: 'general', name: 'General', icon: Globe },
@@ -123,6 +151,7 @@ export default function HomePageClient() {
     },
     onSearch: (query) => {
       setSearchQuery(query)
+      addSearch(query)
     },
     onNavigate: (direction) => navigateCategory(direction),
     onReadArticle: (index) => {

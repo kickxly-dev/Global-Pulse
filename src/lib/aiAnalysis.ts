@@ -10,6 +10,14 @@ interface AnalysisResult {
   confidence: number
   readTime: number
   keywords: string[]
+  topics: string[]
+  entities: string[]
+}
+
+interface RelatedArticle {
+  article: NewsArticle
+  relevanceScore: number
+  reason: string
 }
 
 // Sentiment keywords for analysis
@@ -36,6 +44,12 @@ export function analyzeArticle(article: NewsArticle): AnalysisResult {
   // Extract keywords
   const keywords = extractKeywords(text)
   
+  // Extract topics
+  const topics = extractTopics(text)
+  
+  // Extract entities (people, places, organizations)
+  const entities = extractEntities(text)
+  
   // Calculate confidence (simulated)
   const confidence = 0.75 + Math.random() * 0.2
   
@@ -45,7 +59,9 @@ export function analyzeArticle(article: NewsArticle): AnalysisResult {
     mood,
     confidence,
     readTime,
-    keywords
+    keywords,
+    topics,
+    entities
   }
 }
 
@@ -113,6 +129,103 @@ function extractKeywords(text: string): string[] {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([word]) => word)
+}
+
+function extractTopics(text: string): string[] {
+  const topicKeywords: Record<string, string[]> = {
+    'Technology': ['ai', 'tech', 'software', 'digital', 'app', 'computer', 'cyber'],
+    'Politics': ['election', 'government', 'president', 'congress', 'vote', 'policy'],
+    'Economy': ['market', 'stock', 'economy', 'trade', 'business', 'finance'],
+    'Health': ['health', 'medical', 'hospital', 'doctor', 'virus', 'vaccine'],
+    'Science': ['research', 'study', 'discovery', 'science', 'experiment'],
+    'Sports': ['game', 'team', 'player', 'sport', 'win', 'championship'],
+    'Entertainment': ['movie', 'music', 'celebrity', 'film', 'actor', 'show'],
+  }
+  
+  const detectedTopics: string[] = []
+  
+  Object.entries(topicKeywords).forEach(([topic, keywords]) => {
+    if (keywords.some(keyword => text.includes(keyword))) {
+      detectedTopics.push(topic)
+    }
+  })
+  
+  return detectedTopics.slice(0, 3)
+}
+
+function extractEntities(text: string): string[] {
+  // Simple entity extraction - find capitalized words
+  const words = text.split(/\s+/)
+  const entities: string[] = []
+  
+  words.forEach(word => {
+    // Check if word is capitalized (potential named Entity)
+    if (word.length > 2 && /^[A-Z]/.test(word) && !NEUTRAL_WORDS.includes(word.toLowerCase())) {
+      const cleanWord = word.replace(/[^a-zA-Z]/g, '')
+      if (cleanWord.length > 2 && !entities.includes(cleanWord)) {
+        entities.push(cleanWord)
+      }
+    }
+  })
+  
+  return entities.slice(0, 5)
+}
+
+// Find related articles based on similarity
+export function findRelatedArticles(
+  targetArticle: NewsArticle,
+  allArticles: NewsArticle[],
+  maxResults: number = 5
+): RelatedArticle[] {
+  const targetAnalysis = analyzeArticle(targetArticle)
+  const related: RelatedArticle[] = []
+  
+  allArticles.forEach(article => {
+    if (article.id === targetArticle.id) return
+    
+    const analysis = analyzeArticle(article)
+    let relevanceScore = 0
+    const reasons: string[] = []
+    
+    // Check keyword overlap
+    const keywordOverlap = targetAnalysis.keywords.filter(k => analysis.keywords.includes(k)).length
+    relevanceScore += keywordOverlap * 0.2
+    if (keywordOverlap > 0) reasons.push('Similar topics')
+    
+    // Check topic overlap
+    const topicOverlap = targetAnalysis.topics.filter(t => analysis.topics.includes(t)).length
+    relevanceScore += topicOverlap * 0.15
+    if (topicOverlap > 0) reasons.push('Related category')
+    
+    // Check entity overlap
+    const entityOverlap = targetAnalysis.entities.filter(e => analysis.entities.includes(e)).length
+    relevanceScore += entityOverlap * 0.25
+    if (entityOverlap > 0) reasons.push('Same entities mentioned')
+    
+    // Check same source
+    if (article.source.name === targetArticle.source.name) {
+      relevanceScore += 0.1
+      reasons.push('Same source')
+    }
+    
+    // Check same country
+    if (article.country && targetArticle.country && article.country === targetArticle.country) {
+      relevanceScore += 0.1
+      reasons.push('Same region')
+    }
+    
+    if (relevanceScore > 0.1) {
+      related.push({
+        article,
+        relevanceScore: Math.min(relevanceScore, 1),
+        reason: reasons[0] || 'Related content'
+      })
+    }
+  })
+  
+  return related
+    .sort((a, b) => b.relevanceScore - a.relevanceScore)
+    .slice(0, maxResults)
 }
 
 // Predict future trending topics based on current trends

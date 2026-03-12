@@ -20,18 +20,43 @@ export default function NewsletterSubscription({ onSubscribe }: NewsletterSubscr
 
     setIsLoading(true)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    setIsSubscribed(true)
-    setIsLoading(false)
-    onSubscribe?.(email)
-    
-    // Save to localStorage
-    const subscribers = JSON.parse(localStorage.getItem('newsletterSubscribers') || '[]')
-    if (!subscribers.includes(email)) {
-      subscribers.push(email)
-      localStorage.setItem('newsletterSubscribers', JSON.stringify(subscribers))
+    try {
+      // Call the real digest API
+      const response = await fetch('/api/digest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          preferences: {
+            categories: ['general', 'technology', 'business'],
+            frequency: 'daily'
+          }
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setIsSubscribed(true)
+        onSubscribe?.(email)
+        console.log('Digest subscription successful:', data)
+      } else {
+        throw new Error(data.error || 'Subscription failed')
+      }
+    } catch (error) {
+      console.error('Newsletter subscription error:', error)
+      // Fallback to localStorage if API fails
+      const subscribers = JSON.parse(localStorage.getItem('newsletterSubscribers') || '[]')
+      if (!subscribers.includes(email)) {
+        subscribers.push(email)
+        localStorage.setItem('newsletterSubscribers', JSON.stringify(subscribers))
+        setIsSubscribed(true)
+        onSubscribe?.(email)
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 

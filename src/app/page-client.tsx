@@ -42,6 +42,7 @@ import SmartRecommendations from '@/components/SmartRecommendations'
 import QuickActions from '@/components/QuickActions'
 import ReadingTime from '@/components/ReadingTime'
 import AdvancedSearch from '@/components/AdvancedSearch'
+import DailyDigest from '@/components/DailyDigest'
 import { NewsCardSkeleton, HeroSkeleton, SidebarSkeleton, ArticleViewSkeleton, StatsSkeleton } from '@/components/LoadingSkeletons'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -56,7 +57,7 @@ import { useSearchHistory } from '@/hooks/useSearchHistory'
 import { usePersonalization } from '@/hooks/usePersonalization'
 import { useReadingGoals } from '@/hooks/useReadingGoals'
 import { useThemeSchedule } from '@/hooks/useThemeSchedule'
-import { Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, Activity, X } from 'lucide-react'
+import { Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, Activity, X, Mail } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -93,6 +94,7 @@ export default function HomePageClient() {
     sortBy: 'relevance' as 'relevance' | 'date' | 'popularity',
     language: 'en',
   })
+  const [showDailyDigest, setShowDailyDigest] = useState(false)
   const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
@@ -566,6 +568,15 @@ export default function HomePageClient() {
 
             {/* Newsletter */}
             <NewsletterSubscription />
+            
+            {/* Daily Digest Button */}
+            <button
+              onClick={() => setShowDailyDigest(true)}
+              className="w-full cyber-button flex items-center justify-center space-x-2"
+            >
+              <Mail className="w-4 h-4" />
+              <span>View Daily Digest</span>
+            </button>
           </div>
         </div>
       </main>
@@ -772,6 +783,12 @@ export default function HomePageClient() {
         }}
         onThemeToggle={() => {}}
         isDarkMode={true}
+      />
+
+      {/* Daily Digest */}
+      <DailyDigest
+        isOpen={showDailyDigest}
+        onClose={() => setShowDailyDigest(false)}
       />
     </div>
   )

@@ -491,6 +491,16 @@ export default function HomePageClient() {
                 loading={loading}
                 error={error}
                 onRefresh={refresh}
+                onRead={(a) => {
+                  setFullArticleView(a)
+                  if (zenMode) {
+                    setSelectedZenArticle(a)
+                  }
+                }}
+                onBookmark={(a) => {
+                  const saved = localStorage.getItem('bookmarkedArticles')
+                  setBookmarkedArticles(saved ? JSON.parse(saved) : [])
+                }}
               />
             )}
           </div>

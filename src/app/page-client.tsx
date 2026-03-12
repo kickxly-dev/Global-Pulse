@@ -26,6 +26,9 @@ import AdminPanel from '@/components/AdminPanel'
 import ArticleView from '@/components/ArticleView'
 import ModernNewsCard from '@/components/ModernNewsCard'
 import ModernArticleView from '@/components/ModernArticleView'
+import AISummaryPanel from '@/components/AISummaryPanel'
+import TrendingTopicsTicker from '@/components/TrendingTopicsTicker'
+import SmartSearch from '@/components/SmartSearch'
 import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -62,6 +65,7 @@ export default function HomePageClient() {
   const [showPerformance, setShowPerformance] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [fullArticleView, setFullArticleView] = useState<any>(null)
+  const [aiSummaryArticle, setAiSummaryArticle] = useState<any>(null)
   const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
@@ -347,15 +351,16 @@ export default function HomePageClient() {
         </div>
       </header>
 
-      {/* Search Bar */}
-      <div className="container mx-auto px-4 py-4">
-        <SearchBar 
+      {/* Trending Topics Ticker */}
+      <TrendingTopicsTicker />
+
+      {/* Smart Search */}
+      <div className="container mx-auto px-4 py-6">
+        <SmartSearch 
           onSearch={(query) => {
             setSearchQuery(query)
             addSearch(query)
           }}
-          onCountryChange={setCountry}
-          currentCountry={country}
         />
       </div>
       
@@ -598,6 +603,13 @@ export default function HomePageClient() {
         onArticleClick={(article) => {
           setFullArticleView(article)
         }}
+      />
+
+      {/* AI Summary Panel */}
+      <AISummaryPanel
+        article={aiSummaryArticle}
+        isOpen={!!aiSummaryArticle}
+        onClose={() => setAiSummaryArticle(null)}
       />
     </div>
   )

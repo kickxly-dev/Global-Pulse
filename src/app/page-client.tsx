@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { SessionProvider } from 'next-auth/react'
 import NewsFeed from '@/components/NewsFeed'
 import NewsMap from '@/components/NewsMap'
 import SearchBar from '@/components/SearchBar'

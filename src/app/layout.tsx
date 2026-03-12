@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 import { Toaster } from 'sonner'
+import AuthProvider from '@/components/AuthProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -10,8 +11,8 @@ export const metadata: Metadata = {
   description: 'Live global news platform delivering verified, up-to-the-minute stories and alerts from around the world',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icon-192.png',
-    apple: '/icon-192.png',
+    icon: '/icon-192.png.svg',
+    apple: '/icon-192.png.svg',
   },
 }
 
@@ -36,7 +37,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.className} bg-cyber-darker text-gray-100 min-h-screen`}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster
           position="top-right"
           toastOptions={{

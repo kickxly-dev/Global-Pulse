@@ -1,19 +1,36 @@
 import axios from 'axios'
 import { NewsArticle, NewsApiResponse } from '@/types/news'
 
-// GDELT API - Free, no API key required, works in production
-const GDELT_API_BASE_URL = 'https://api.gdeltproject.org/api/v2/doc/doc'
-
-// Category to GDELT theme mapping
-const CATEGORY_THEMES: Record<string, string> = {
-  general: '',
-  technology: 'theme:technology',
-  business: 'theme:economy',
-  health: 'theme:health',
-  science: 'theme:science',
-  sports: 'theme:sports',
-  entertainment: 'theme:entertainment',
+// RSS Feed Sources - Free, no API key required
+const RSS_FEEDS: Record<string, string[]> = {
+  general: [
+    'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
+    'https://feeds.bbci.co.uk/news/rss.xml',
+  ],
+  technology: [
+    'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',
+    'https://feeds.bbci.co.uk/news/technology/rss.xml',
+  ],
+  business: [
+    'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',
+    'https://feeds.bbci.co.uk/news/business/rss.xml',
+  ],
+  health: [
+    'https://rss.nytimes.com/services/xml/rss/nyt/Health.xml',
+  ],
+  science: [
+    'https://rss.nytimes.com/services/xml/rss/nyt/Science.xml',
+  ],
+  sports: [
+    'https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml',
+  ],
+  entertainment: [
+    'https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml',
+  ],
 }
+
+// Use rss2json.com API to convert RSS to JSON (free, no key needed)
+const RSS2JSON_API = 'https://api.rss2json.com/v1/api.json?rss_url='
 
 // Country coordinates for map markers
 const COUNTRY_COORDINATES: Record<string, { lat: number; lng: number }> = {
@@ -102,60 +119,52 @@ export async function fetchTopHeadlines(params: {
   try {
     const { category = 'general', country = 'us', query, pageSize = 50 } = params
 
-    // Build GDELT query
-    let queryParts: string[] = []
+    // Get RSS feeds for the category
+    const feeds = RSS_FEEDS[category] || RSS_FEEDS.general
     
-    // Add category theme
-    if (category && CATEGORY_THEMES[category]) {
-      queryParts.push(CATEGORY_THEMES[category])
-    }
-    
-    // Add country filter
-    if (country && COUNTRY_NAMES[country]) {
-      queryParts.push(`sourcecountry:${COUNTRY_NAMES[country]}`)
-    }
-    
-    // Add search query
-    if (query) {
-      queryParts.push(query)
-    }
-    
-    // Default query if no filters
-    const searchQuery = queryParts.length > 0 ? queryParts.join(' ') : 'news'
-    
-    // Calculate time range (last 24 hours)
-    const now = new Date()
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    const startDateTime = yesterday.toISOString().replace(/[-:]/g, '').split('.')[0] + '00'
-    const endDateTime = now.toISOString().replace(/[-:]/g, '').split('.')[0] + '00'
+    // Fetch from multiple feeds
+    const feedPromises = feeds.map(feedUrl => 
+      axios.get(`${RSS2JSON_API}${encodeURIComponent(feedUrl)}`, {
+        timeout: 10000,
+      }).catch(err => {
+        console.error(`Failed to fetch ${feedUrl}:`, err.message)
+        return null
+      })
+    )
 
-    const response = await axios.get(GDELT_API_BASE_URL, {
-      params: {
-        query: searchQuery,
-        mode: 'artlist',
-        format: 'json',
-        maxrecords: pageSize,
-        startdatetime: startDateTime,
-        enddatetime: endDateTime,
-        sort: 'datedesc',
-      },
-      timeout: 15000,
+    const responses = await Promise.all(feedPromises)
+    
+    // Combine all articles
+    let allArticles: any[] = []
+    responses.forEach(response => {
+      if (response?.data?.items) {
+        allArticles = allArticles.concat(response.data.items)
+      }
     })
 
-    // Transform GDELT response to our format
-    const articles = (response.data.articles || []).map((article: any, index: number) => ({
-      id: article.url || `gdelt-${Date.now()}-${index}`,
-      title: article.title || 'Untitled',
-      description: article.segbody || article.snippet || '',
-      url: article.url || '#',
-      urlToImage: article.imageurl || null,
-      publishedAt: article.segdate || new Date().toISOString(),
+    // Filter by query if provided
+    if (query) {
+      const queryLower = query.toLowerCase()
+      allArticles = allArticles.filter(article => 
+        article.title?.toLowerCase().includes(queryLower) ||
+        article.description?.toLowerCase().includes(queryLower)
+      )
+    }
+
+    // Transform to our format
+    const articles = allArticles.slice(0, pageSize).map((item: any, index: number) => ({
+      id: item.link || `rss-${Date.now()}-${index}`,
+      title: item.title || 'Untitled',
+      description: item.description || item.content || '',
+      url: item.link || '#',
+      urlToImage: item.thumbnail || item.enclosure?.link || null,
+      publishedAt: item.pubDate || item.pubdate || new Date().toISOString(),
       source: {
-        id: article.domain || 'unknown',
-        name: article.domain || 'Unknown Source',
+        id: item.author || 'rss',
+        name: item.author || 'RSS Feed',
       },
-      author: null,
-      content: article.segbody || article.snippet || '',
+      author: item.author || null,
+      content: item.content || item.description || '',
       coordinates: COUNTRY_COORDINATES[country] || { lat: 0, lng: 0 },
       country,
       category,
@@ -163,12 +172,12 @@ export async function fetchTopHeadlines(params: {
 
     return {
       status: 'ok',
-      totalResults: response.data.totalcount || articles.length,
+      totalResults: articles.length,
       articles,
     }
   } catch (error: any) {
-    console.error('Error fetching news from GDELT:', error.response?.data || error.message)
-    throw new Error('Failed to fetch news from GDELT')
+    console.error('Error fetching RSS feeds:', error.message)
+    throw new Error('Failed to fetch news from RSS feeds')
   }
 }
 
@@ -180,50 +189,55 @@ export async function searchNews(query: string, params?: {
   try {
     const { pageSize = 50 } = params || {}
 
-    // Calculate time range (last 7 days for search)
-    const now = new Date()
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const startDateTime = weekAgo.toISOString().replace(/[-:]/g, '').split('.')[0] + '00'
-    const endDateTime = now.toISOString().replace(/[-:]/g, '').split('.')[0] + '00'
+    // Search across all general feeds
+    const feeds = RSS_FEEDS.general
+    
+    const feedPromises = feeds.map(feedUrl => 
+      axios.get(`${RSS2JSON_API}${encodeURIComponent(feedUrl)}`, {
+        timeout: 10000,
+      }).catch(() => null)
+    )
 
-    const response = await axios.get(GDELT_API_BASE_URL, {
-      params: {
-        query: query,
-        mode: 'artlist',
-        format: 'json',
-        maxrecords: pageSize,
-        startdatetime: startDateTime,
-        enddatetime: endDateTime,
-        sort: 'datedesc',
-      },
-      timeout: 15000,
+    const responses = await Promise.all(feedPromises)
+    
+    let allArticles: any[] = []
+    responses.forEach(response => {
+      if (response?.data?.items) {
+        allArticles = allArticles.concat(response.data.items)
+      }
     })
 
-    // Transform GDELT response
-    const articles = (response.data.articles || []).map((article: any, index: number) => ({
-      id: article.url || `gdelt-search-${Date.now()}-${index}`,
-      title: article.title || 'Untitled',
-      description: article.segbody || article.snippet || '',
-      url: article.url || '#',
-      urlToImage: article.imageurl || null,
-      publishedAt: article.segdate || new Date().toISOString(),
+    // Filter by query
+    const queryLower = query.toLowerCase()
+    const filtered = allArticles.filter(article => 
+      article.title?.toLowerCase().includes(queryLower) ||
+      article.description?.toLowerCase().includes(queryLower)
+    )
+
+    const articles = filtered.slice(0, pageSize).map((item: any, index: number) => ({
+      id: item.link || `search-${Date.now()}-${index}`,
+      title: item.title || 'Untitled',
+      description: item.description || item.content || '',
+      url: item.link || '#',
+      urlToImage: item.thumbnail || null,
+      publishedAt: item.pubDate || new Date().toISOString(),
       source: {
-        id: article.domain || 'unknown',
-        name: article.domain || 'Unknown Source',
+        id: item.author || 'rss',
+        name: item.author || 'RSS Feed',
       },
-      author: null,
-      content: article.segbody || article.snippet || '',
+      author: item.author || null,
+      content: item.content || item.description || '',
       coordinates: { lat: 0, lng: 0 },
     }))
 
     return {
       status: 'ok',
-      totalResults: response.data.totalcount || articles.length,
+      totalResults: articles.length,
       articles,
     }
   } catch (error: any) {
-    console.error('Error searching news from GDELT:', error.response?.data || error.message)
-    throw new Error('Failed to search news from GDELT')
+    console.error('Error searching RSS feeds:', error.message)
+    throw new Error('Failed to search news from RSS feeds')
   }
 }
 

@@ -41,6 +41,14 @@ export default function EnhancedNewsCard({
   const [showShareMenu, setShowShareMenu] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // Calculate reading time
+  const getReadingTime = () => {
+    const content = article.content || article.description || ''
+    const wordCount = content.split(/\s+/).length
+    const minutes = Math.ceil(wordCount / 200) // 200 words per minute
+    return minutes < 1 ? '< 1 min' : `${minutes} min read`
+  }
+
   useEffect(() => {
     // Analyze article for sentiment and summary
     const result = analyzeArticle(article)

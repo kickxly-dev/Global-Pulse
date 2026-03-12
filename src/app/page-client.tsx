@@ -484,6 +484,7 @@ export default function HomePageClient() {
                       }
                     }}
                     onShare={(a) => setShareArticle(a)}
+                    onAiSummary={(a) => setAiSummaryArticle(a)}
                   />
                 ))}
               </div>

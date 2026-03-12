@@ -7,10 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   BookmarkPlus, BookmarkX, Clock, Brain, Zap, 
   SmilePlus, Frown, Meh, Volume2, VolumeX,
-  Eye, EyeOff, TrendingUp, AlertCircle, Share2, 
+  Eye, EyeOff, TrendingUp, AlertCircle, Share2, Sparkles, 
   Twitter, Linkedin, Link2, Check, MessageCircle
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import ArticleReactions from './ArticleReactions'
 
 interface EnhancedNewsCardProps {
   article: NewsArticle
@@ -20,6 +21,7 @@ interface EnhancedNewsCardProps {
   onRead?: (article: NewsArticle) => void
   onBookmark?: (article: NewsArticle) => void
   onShare?: (article: NewsArticle) => void
+  onAiSummary?: (article: NewsArticle) => void
 }
 
 export default function EnhancedNewsCard({ 
@@ -29,7 +31,8 @@ export default function EnhancedNewsCard({
   speedReadMode,
   onRead,
   onBookmark,
-  onShare
+  onShare,
+  onAiSummary
 }: EnhancedNewsCardProps) {
   const [analysis, setAnalysis] = useState<any>(null)
   const [isBookmarked, setIsBookmarked] = useState(false)
@@ -254,6 +257,15 @@ export default function EnhancedNewsCard({
           >
             <Share2 className="w-4 h-4" />
           </button>
+
+          {/* AI Summary Button */}
+          <button
+            onClick={() => onAiSummary?.(article)}
+            className="p-1 rounded transition-colors text-gray-500 hover:text-purple-400"
+            title="AI Summary"
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -333,6 +345,9 @@ export default function EnhancedNewsCard({
           ))}
         </div>
       )}
+
+      {/* Article Reactions */}
+      <ArticleReactions articleId={article.id} />
 
       {/* Read Full Article Button */}
       <button

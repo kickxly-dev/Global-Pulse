@@ -45,7 +45,7 @@ export default function BreakingNewsBanner({
     
     // Save to localStorage
     try {
-      localStorage.setItem('dismissedBreakingNews', JSON.stringify([...newDismissed]))
+      localStorage.setItem('dismissedBreakingNews', JSON.stringify(Array.from(newDismissed)))
     } catch (e) {
       console.error('Error saving dismissed breaking news:', e)
     }
@@ -60,7 +60,7 @@ export default function BreakingNewsBanner({
     setDismissedArticles(newDismissed)
     
     try {
-      localStorage.setItem('dismissedBreakingNews', JSON.stringify([...newDismissed]))
+      localStorage.setItem('dismissedBreakingNews', JSON.stringify(Array.from(newDismissed)))
     } catch (e) {
       console.error('Error saving dismissed breaking news:', e)
     }

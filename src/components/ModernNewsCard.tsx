@@ -3,16 +3,17 @@
 import { NewsArticle } from '@/types/news'
 import { motion } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
-import { ExternalLink, Bookmark, Share2, Clock, ArrowRight } from 'lucide-react'
+import { ExternalLink, Bookmark, Share2, Clock, ArrowRight, Sparkles } from 'lucide-react'
 
 interface ModernNewsCardProps {
   article: NewsArticle
   index: number
   onRead?: (article: NewsArticle) => void
   onBookmark?: (article: NewsArticle) => void
+  onAiSummary?: (article: NewsArticle) => void
 }
 
-export default function ModernNewsCard({ article, index, onRead, onBookmark }: ModernNewsCardProps) {
+export default function ModernNewsCard({ article, index, onRead, onBookmark, onAiSummary }: ModernNewsCardProps) {
   const isBreaking = () => {
     const publishedTime = new Date(article.publishedAt).getTime()
     const now = Date.now()
@@ -90,13 +91,21 @@ export default function ModernNewsCard({ article, index, onRead, onBookmark }: M
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => onRead?.(article)}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyber-blue to-cyber-purple text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-cyber-blue/30 transition-all duration-300 group/btn"
             >
-              <span>Read Article</span>
+              <span>Read</span>
               <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+            </button>
+            
+            <button
+              onClick={() => onAiSummary?.(article)}
+              className="p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-xl text-purple-400 hover:text-purple-300 hover:border-purple-500/50 transition-all duration-300"
+              title="AI Summary"
+            >
+              <Sparkles className="w-4 h-4" />
             </button>
             
             <button

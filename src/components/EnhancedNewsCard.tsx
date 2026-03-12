@@ -295,6 +295,14 @@ export default function EnhancedNewsCard({
         </div>
       )}
 
+      {/* Read Full Article Button */}
+      <button
+        onClick={() => onRead?.(article)}
+        className="w-full cyber-button text-sm py-2 mb-3"
+      >
+        Read Full Article
+      </button>
+
       {/* Article Actions */}
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">

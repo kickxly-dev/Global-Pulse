@@ -23,6 +23,7 @@ import ArticleReactions from '@/components/ArticleReactions'
 import NewsletterSubscription from '@/components/NewsletterSubscription'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import AdminPanel from '@/components/AdminPanel'
+import ArticleView from '@/components/ArticleView'
 import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -58,6 +59,7 @@ export default function HomePageClient() {
   const [showDashboardCustomizer, setShowDashboardCustomizer] = useState(false)
   const [showPerformance, setShowPerformance] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
+  const [fullArticleView, setFullArticleView] = useState<any>(null)
   const [activeTab, setActiveTab] = useState('home')
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
@@ -462,6 +464,7 @@ export default function HomePageClient() {
                     tldrMode={tldrMode}
                     speedReadMode={speedReadMode}
                     onRead={(a) => {
+                      setFullArticleView(a)
                       if (zenMode) {
                         setSelectedZenArticle(a)
                       }
@@ -620,6 +623,14 @@ export default function HomePageClient() {
 
       {/* Admin Panel - Secret: Ctrl+Shift+A */}
       <AdminPanel />
+
+      {/* Full Article View */}
+      <ArticleView
+        article={fullArticleView}
+        allArticles={articles}
+        isOpen={!!fullArticleView}
+        onClose={() => setFullArticleView(null)}
+      />
     </div>
   )
 }

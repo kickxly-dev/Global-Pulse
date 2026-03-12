@@ -13,10 +13,11 @@ import PulsePredict from '@/components/PulsePredict'
 import DJMode from '@/components/DJMode'
 import ReadingModes, { ZenModeOverlay } from '@/components/ReadingModes'
 import EnhancedNewsCard from '@/components/EnhancedNewsCard'
+import BookmarksPanel from '@/components/BookmarksPanel'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { getGlobalMood } from '@/lib/aiAnalysis'
 import { useVoiceControl } from '@/hooks/useVoiceControl'
-import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command } from 'lucide-react'
+import { Activity, Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -32,6 +33,7 @@ export default function HomePageClient() {
   const [showMap, setShowMap] = useState(true)
   const [showPulseScore, setShowPulseScore] = useState(true)
   const [showPulsePredict, setShowPulsePredict] = useState(true)
+  const [showBookmarks, setShowBookmarks] = useState(false)
   const [newStoryAnimation, setNewStoryAnimation] = useState(false)
   const [breakingNewsAlert, setBreakingNewsAlert] = useState(false)
   const [tldrMode, setTldrMode] = useState(false)

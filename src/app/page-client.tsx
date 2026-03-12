@@ -14,7 +14,7 @@ import DJMode from '@/components/DJMode'
 import ReadingModes, { ZenModeOverlay } from '@/components/ReadingModes'
 import EnhancedNewsCard from '@/components/EnhancedNewsCard'
 import ShareModal from '@/components/ShareModal'
-import BookmarksPanel, { toggleBookmark, isArticleBookmarked } from '@/components/BookmarksPanel'
+import BookmarksPanel from '@/components/BookmarksPanel'
 import UserMenu from '@/components/UserMenu'
 import ThemeToggle from '@/components/ThemeToggle'
 import MobileNav from '@/components/MobileNav'
@@ -44,6 +44,7 @@ import ReadingTime from '@/components/ReadingTime'
 import AdvancedSearch from '@/components/AdvancedSearch'
 import DailyDigest from '@/components/DailyDigest'
 import AutoRefreshIndicator from '@/components/AutoRefreshIndicator'
+import { SimpleThemeToggle, SimpleReadingMode, toggleBookmark, isArticleBookmarked, getBookmarks } from '@/components/FixedFeatures'
 import { NewsCardSkeleton, HeroSkeleton, SidebarSkeleton, ArticleViewSkeleton, StatsSkeleton } from '@/components/LoadingSkeletons'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
 import { PerformanceMonitor } from '@/hooks/usePerformanceMonitor'
@@ -336,8 +337,11 @@ export default function HomePageClient() {
                 <span className="hidden sm:inline text-sm">Saved</span>
               </button>
               
-              {/* Theme Toggle */}
-              <ThemeToggle />
+              {/* Simple Theme Toggle */}
+              <SimpleThemeToggle 
+                currentTheme={currentTheme}
+                onThemeChange={setCurrentTheme}
+              />
 
               {/* Night Mode Toggle */}
               <button
@@ -747,8 +751,8 @@ export default function HomePageClient() {
         onRetry={refresh}
       />
 
-      {/* Reading Mode */}
-      <ReadingMode
+      {/* Simple Reading Mode */}
+      <SimpleReadingMode
         article={readingModeArticle}
         isOpen={!!readingModeArticle}
         onClose={() => setReadingModeArticle(null)}

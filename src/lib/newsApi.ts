@@ -1,7 +1,8 @@
 import axios from 'axios'
 import { NewsArticle, NewsApiResponse } from '@/types/news'
 
-const NEWS_API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY
+// Use server-side env var first, fallback to client-side
+const NEWS_API_KEY = process.env.NEWS_API_KEY || process.env.NEXT_PUBLIC_NEWS_API_KEY
 const NEWS_API_BASE_URL = 'https://newsapi.org/v2'
 
 // Country coordinates for map markers

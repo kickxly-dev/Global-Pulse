@@ -13,6 +13,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NEWS_API_KEY
+        value: 7f669cabd21b4d648c1493728928761b
       - key: NEXT_PUBLIC_NEWS_API_KEY
         value: 7f669cabd21b4d648c1493728928761b
       - key: NEXT_PUBLIC_USE_OPENSTREETMAP

@@ -33,6 +33,7 @@ import VoiceNarrator from '@/components/VoiceNarrator'
 import ReadingProgressTracker from '@/components/ReadingProgressTracker'
 import { NightModeToggle, NightModeSettings, useNightMode } from '@/components/NightMode'
 import PushNotificationManager, { usePushNotifications } from '@/components/PushNotificationManager'
+import BreakingNewsBanner from '@/components/BreakingNewsBanner'
 import OfflineIndicator, { cacheArticles, getCachedArticles } from '@/components/OfflineIndicator'
 import { NewsCardSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import { NewStoryPulse, BreakingNewsAlert, LiveDataStream } from '@/components/StoryRipple'
@@ -87,7 +88,7 @@ export default function HomePageClient() {
   const previousArticleCount = useRef(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
-  const { articles, loading, error, refresh, totalResults } = useNewsData({
+  const { articles, loading, error, refresh, totalResults, breakingNews, newArticlesCount, isBreakingNews } = useNewsData({
     category: selectedCategory,
     query: searchQuery,
     country: country,
@@ -378,6 +379,17 @@ export default function HomePageClient() {
           </div>
         </div>
       </header>
+
+      {/* Breaking News Banner */}
+      <BreakingNewsBanner
+        articles={breakingNews}
+        onArticleClick={(article) => {
+          setFullArticleView(article)
+        }}
+        onDismiss={() => {
+          // Optional: track dismissed breaking news
+        }}
+      />
 
       {/* Trending Topics Ticker */}
       <TrendingTopicsTicker />

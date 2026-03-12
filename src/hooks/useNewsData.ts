@@ -10,6 +10,28 @@ interface UseNewsDataParams {
   refreshInterval?: number
 }
 
+// Check if article is breaking news (published within last 2 hours)
+function isBreakingNews(article: NewsArticle): boolean {
+  const publishedTime = new Date(article.publishedAt).getTime()
+  const now = Date.now()
+  const hoursDiff = (now - publishedTime) / (1000 * 60 * 60)
+  return hoursDiff < 2
+}
+
+// Send browser notification for breaking news
+function sendBreakingNewsNotification(article: NewsArticle) {
+  if (typeof window === 'undefined') return
+  
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('🔴 BREAKING NEWS', {
+      body: article.title,
+      icon: article.urlToImage || '/icon.png',
+      tag: article.id,
+      requireInteraction: true,
+    })
+  }
+}
+
 export function useNewsData({
   category = 'general',
   country = 'us',
@@ -21,6 +43,8 @@ export function useNewsData({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [totalResults, setTotalResults] = useState(0)
+  const [breakingNews, setBreakingNews] = useState<NewsArticle[]>([])
+  const [newArticlesCount, setNewArticlesCount] = useState(0)
   const previousArticlesRef = useRef<Set<string>>(new Set())
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -46,30 +70,54 @@ export function useNewsData({
         throw new Error(data.error)
       }
 
+      const fetchedArticles = data.articles || []
+      
       // Check for new articles
-      const newArticleIds = new Set<string>(data.articles.map((a: NewsArticle) => a.id))
-      const hasNewArticles = data.articles.some(
+      const newArticleIds = new Set<string>(fetchedArticles.map((a: NewsArticle) => a.id))
+      const newArticles = fetchedArticles.filter(
         (article: NewsArticle) => !previousArticlesRef.current.has(article.id)
       )
+      const hasNewArticles = newArticles.length > 0
+
+      // Detect breaking news
+      const breaking = newArticles.filter(isBreakingNews)
+      if (breaking.length > 0) {
+        setBreakingNews(breaking)
+        breaking.forEach(sendBreakingNewsNotification)
+        
+        // Show breaking news toast
+        toast.error(`🔴 ${breaking.length} BREAKING NEWS ALERT${breaking.length > 1 ? 'S' : ''}`, {
+          duration: 5000,
+          action: {
+            label: 'View',
+            onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+          },
+        })
+        
+        // Play breaking news sound
+        playNotificationSound('breaking')
+      }
 
       if (hasNewArticles && previousArticlesRef.current.size > 0 && showToast) {
-        const newCount = data.articles.filter(
-          (article: NewsArticle) => !previousArticlesRef.current.has(article.id)
-        ).length
+        setNewArticlesCount(newArticles.length)
         
-        toast.success(`${newCount} new ${newCount === 1 ? 'story' : 'stories'} available`, {
+        toast.success(`${newArticles.length} new ${newArticles.length === 1 ? 'story' : 'stories'} available`, {
           duration: 3000,
+          action: {
+            label: 'Refresh',
+            onClick: () => window.location.reload(),
+          },
         })
 
         // Play notification sound if enabled
         const settings = JSON.parse(localStorage.getItem('userPreferences') || '{}')
-        if (settings.soundEnabled) {
+        if (settings.soundEnabled && breaking.length === 0) {
           playNotificationSound('breaking')
         }
       }
 
       previousArticlesRef.current = newArticleIds
-      setArticles(data.articles || [])
+      setArticles(fetchedArticles)
       setTotalResults(data.totalResults || 0)
       setLoading(false)
     } catch (err: any) {
@@ -110,6 +158,9 @@ export function useNewsData({
     error,
     refresh,
     totalResults,
+    breakingNews,
+    newArticlesCount,
+    isBreakingNews,
   }
 }
 

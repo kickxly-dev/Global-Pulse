@@ -23,7 +23,23 @@ export default function AnalyticsDashboard() {
   }
 
   const last7Days = dailyStats.slice(-7)
-  const maxArticles = Math.max(...last7Days.map(d => d.articlesRead), 1)
+  const maxArticles = last7Days.length > 0 ? Math.max(...last7Days.map(d => d.articlesRead), 1) : 1
+
+  // Show empty state if no data
+  if (stats.totalArticlesRead === 0) {
+    return (
+      <div className="cyber-card text-center py-8">
+        <BarChart3 className="w-12 h-12 text-cyber-blue mx-auto mb-4" />
+        <h2 className="text-lg font-bold font-cyber text-cyber-blue mb-2">
+          Reading Analytics
+        </h2>
+        <p className="text-gray-400 mb-4">Start reading articles to see your stats!</p>
+        <div className="text-sm text-gray-500">
+          Your reading history will appear here
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

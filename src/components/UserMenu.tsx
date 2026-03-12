@@ -2,12 +2,14 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User, LogOut, LogIn, Settings, Bookmark, BarChart3 } from 'lucide-react'
 
 export default function UserMenu() {
   const { data: session, status } = useSession()
   const [showMenu, setShowMenu] = useState(false)
+  const router = useRouter()
 
   if (status === 'loading') {
     return (
@@ -18,7 +20,7 @@ export default function UserMenu() {
   if (!session) {
     return (
       <button
-        onClick={() => signIn()}
+        onClick={() => router.push('/auth/signin')}
         className="flex items-center space-x-2 px-4 py-2 bg-cyber-blue/10 border border-cyber-blue/30 rounded-lg text-cyber-blue hover:bg-cyber-blue/20 transition-colors"
       >
         <LogIn className="w-4 h-4" />

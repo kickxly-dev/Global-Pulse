@@ -6,11 +6,55 @@
   :root {
     --cyber-black: #0a0a0a;
     --cyber-dark: #0f0f0f;
+    --cyber-darker: #050505;
     --cyber-red: #ff0040;
     --cyber-blue: #00d4ff;
     --cyber-purple: #bd00ff;
+    --cyber-pink: #ff00aa;
     --cyber-green: #00ff88;
     --cyber-yellow: #ffd700;
+  }
+
+  /* Theme: Cyber (default) */
+  .theme-cyber, body:not(.theme-dark):not(.theme-light) {
+    --cyber-blue: #00f0ff;
+    --cyber-purple: #bf00ff;
+    --cyber-pink: #ff00aa;
+    --cyber-yellow: #ffff00;
+    --cyber-green: #00ff88;
+    --cyber-red: #ff0055;
+    --cyber-dark: #0a0a0a;
+    --cyber-darker: #050505;
+    background-color: #0a0a0a;
+    color: #f3f4f6;
+  }
+
+  /* Theme: Dark */
+  .theme-dark {
+    --cyber-blue: #3b82f6;
+    --cyber-purple: #8b5cf6;
+    --cyber-pink: #ec4899;
+    --cyber-yellow: #eab308;
+    --cyber-green: #22c55e;
+    --cyber-red: #ef4444;
+    --cyber-dark: #111827;
+    --cyber-darker: #0f172a;
+    background-color: #111827;
+    color: #f3f4f6;
+  }
+
+  /* Theme: Light */
+  .theme-light {
+    --cyber-blue: #2563eb;
+    --cyber-purple: #7c3aed;
+    --cyber-pink: #db2777;
+    --cyber-yellow: #ca8a04;
+    --cyber-green: #16a34a;
+    --cyber-red: #dc2626;
+    --cyber-dark: #f3f4f6;
+    --cyber-darker: #ffffff;
+    background-color: #f3f4f6;
+    color: #111827;
   }
 
   * {

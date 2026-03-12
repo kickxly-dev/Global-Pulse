@@ -49,15 +49,16 @@ export default function ArticleView({ article, allArticles, isOpen, onClose }: A
 
   const readTime = Math.ceil((article.content?.length || 0) / 1000) // Rough estimate: 1000 chars per minute
 
+  if (!isOpen || !article) return null
+
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -230,6 +231,5 @@ export default function ArticleView({ article, allArticles, isOpen, onClose }: A
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   )
 }

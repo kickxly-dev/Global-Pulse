@@ -432,8 +432,14 @@ export default function HomePageClient() {
                       }
                     }}
                     onBookmark={(a) => {
-                      const saved = localStorage.getItem('bookmarkedArticles')
-                      setBookmarkedArticles(saved ? JSON.parse(saved) : [])
+                      try {
+                        if (typeof window !== 'undefined') {
+                          const saved = localStorage.getItem('bookmarkedArticles')
+                          setBookmarkedArticles(saved ? JSON.parse(saved) : [])
+                        }
+                      } catch (e) {
+                        console.error('Error loading bookmarks:', e)
+                      }
                     }}
                   />
                 ))}

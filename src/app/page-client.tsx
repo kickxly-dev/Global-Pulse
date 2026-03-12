@@ -235,13 +235,11 @@ export default function HomePageClient() {
   }, [])
 
   return (
-    <ErrorBoundary>
-      <div className={`min-h-screen bg-cyber-darker ${theme === 'light' ? 'theme-light' : theme === 'dark' ? 'theme-dark' : 'theme-cyber'}`}>
-      
-      <NotificationManager />
-      <LiveDataStream />
-      <NewStoryPulse trigger={newStoryAnimation} />
-      <BreakingNewsAlert show={breakingNewsAlert} />
+    <div className={`min-h-screen bg-cyber-darker ${theme === 'light' ? 'theme-light' : theme === 'dark' ? 'theme-dark' : 'theme-cyber'}`}>
+        <NotificationManager />
+        <LiveDataStream />
+        <NewStoryPulse trigger={newStoryAnimation} />
+        <BreakingNewsAlert show={breakingNewsAlert} />
       
       {/* Header */}
       <header className="sticky top-0 z-50 bg-cyber-dark/90 backdrop-blur-cyber border-b border-cyber-blue/20">
@@ -726,7 +724,6 @@ export default function HomePageClient() {
 
       {/* Admin Panel - Secret: Ctrl+Shift+A */}
       <AdminPanel />
-      </ErrorBoundary>
     </div>
   )
 }

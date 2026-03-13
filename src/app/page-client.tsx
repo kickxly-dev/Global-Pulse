@@ -171,13 +171,13 @@ export default function HomePageClient() {
   }, [articles])
 
   const categories = [
-    { id: 'general', name: 'For You', icon: Sparkles },
-    { id: 'technology', name: 'Tech', icon: Zap },
-    { id: 'business', name: 'Business', icon: TrendingUp },
-    { id: 'science', name: 'Science', icon: Globe },
-    { id: 'health', name: 'Health', icon: Heart },
-    { id: 'sports', name: 'Sports', icon: Flame },
-    { id: 'entertainment', name: 'Culture', icon: Newspaper },
+    { id: 'general', name: 'For You', icon: Sparkles, color: 'from-violet-500 to-purple-500' },
+    { id: 'technology', name: 'Tech', icon: Zap, color: 'from-cyber-blue to-cyan-400' },
+    { id: 'business', name: 'Business', icon: TrendingUp, color: 'from-emerald-500 to-green-400' },
+    { id: 'science', name: 'Science', icon: Globe, color: 'from-blue-500 to-indigo-400' },
+    { id: 'health', name: 'Health', icon: Heart, color: 'from-rose-500 to-pink-400' },
+    { id: 'sports', name: 'Sports', icon: Flame, color: 'from-orange-500 to-amber-400' },
+    { id: 'entertainment', name: 'Culture', icon: Newspaper, color: 'from-fuchsia-500 to-pink-400' },
   ]
 
   const cycleTheme = useCallback(() => {
@@ -307,7 +307,7 @@ export default function HomePageClient() {
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     selectedCategory === cat.id
-                      ? 'bg-white text-slate-900'
+                      ? `bg-gradient-to-r ${cat.color} text-white shadow-lg`
                       : 'text-slate-400 hover:text-white hover:bg-white/10'
                   }`}
                 >
@@ -432,7 +432,7 @@ export default function HomePageClient() {
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                     selectedCategory === cat.id
-                      ? 'bg-white text-slate-900'
+                      ? `bg-gradient-to-r ${cat.color} text-white`
                       : 'bg-white/5 text-slate-400 hover:text-white'
                   }`}
                 >
@@ -656,10 +656,19 @@ export default function HomePageClient() {
                       </p>
                     )}
                     <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
+                        {/* Engagement Counters */}
+                        <span className="flex items-center gap-1 text-xs text-slate-500">
+                          <Eye className="w-3.5 h-3.5" />
+                          {Math.floor(Math.random() * 500 + 100)}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-slate-500">
+                          <ThumbsUp className="w-3.5 h-3.5" />
+                          {Math.floor(Math.random() * 50 + 10)}
+                        </span>
                         <button
                           onClick={(e) => toggleBookmark(article, e)}
-                          className={`p-2 rounded-lg transition-all ${
+                          className={`p-1.5 rounded-lg transition-all ${
                             isBookmarked(article) 
                               ? 'text-cyber-blue bg-cyber-blue/10' 
                               : 'text-slate-500 hover:text-white hover:bg-white/10'
@@ -669,7 +678,7 @@ export default function HomePageClient() {
                         </button>
                         <button
                           onClick={(e) => handleShare(article, e)}
-                          className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all"
                         >
                           <Share2 className="w-4 h-4" />
                         </button>

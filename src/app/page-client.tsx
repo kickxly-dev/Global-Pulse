@@ -23,6 +23,9 @@ export default function HomePageClient() {
   const [shareArticle, setShareArticle] = useState<any>(null)
   const [showShare, setShowShare] = useState(false)
   const [showDailyDigest, setShowDailyDigest] = useState(false)
+  const [breakingNews, setBreakingNews] = useState<any[]>([])
+  const [showBreakingAlert, setShowBreakingAlert] = useState(false)
+  const previousArticleCount = useRef(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
   const { articles, loading, error, refresh, lastRefresh } = useNewsData({
@@ -42,7 +45,61 @@ export default function HomePageClient() {
     }
   }, [])
 
-  // Check if article is bookmarked
+  // Detect breaking news and new articles
+  useEffect(() => {
+    if (articles.length > previousArticleCount.current && previousArticleCount.current > 0) {
+      const newArticles = articles.slice(0, articles.length - previousArticleCount.current)
+      const breaking = newArticles.filter(article => {
+        const publishedTime = new Date(article.publishedAt).getTime()
+        const now = Date.now()
+        return (now - publishedTime) < (60 * 60 * 1000) // Less than 1 hour old
+      })
+      
+      if (breaking.length > 0) {
+        setBreakingNews(breaking)
+        setShowBreakingAlert(true)
+        toast.success(`${breaking.length} breaking news article${breaking.length > 1 ? 's' : ''}!`, {
+          icon: '🚨'
+        })
+        setTimeout(() => setShowBreakingAlert(false), 10000)
+      }
+    }
+    previousArticleCount.current = articles.length
+  }, [articles])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // '/' to focus search
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+      // 'r' to refresh
+      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) {
+        refresh()
+      }
+      // 'b' to toggle bookmarks
+      if (e.key === 'b' && !e.metaKey && !e.ctrlKey) {
+        setShowBookmarks(prev => !prev)
+      }
+      // 't' to cycle theme
+      if (e.key === 't' && !e.metaKey && !e.ctrlKey) {
+        cycleTheme()
+      }
+      // 'Escape' to close modals
+      if (e.key === 'Escape') {
+        setShowArticle(false)
+        setShowShare(false)
+        setShowBookmarks(false)
+        setShowDailyDigest(false)
+        setShowBreakingAlert(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [refresh])
   const isBookmarked = (article: any) => {
     return bookmarkedArticles.some(a => a.url === article.url)
   }
@@ -99,6 +156,34 @@ export default function HomePageClient() {
 
   return (
     <div className={`min-h-screen bg-cyber-darker ${theme === 'light' ? 'theme-light' : theme === 'dark' ? 'theme-dark' : 'theme-cyber'}`}>
+      {/* Breaking News Alert */}
+      <AnimatePresence>
+        {showBreakingAlert && breakingNews.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-20 left-4 right-4 z-50 bg-red-500/90 backdrop-blur-sm rounded-lg p-4 border border-red-400/50 shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <AlertCircle className="w-6 h-6 text-white" />
+                <div>
+                  <h3 className="text-white font-bold">Breaking News</h3>
+                  <p className="text-red-100 text-sm">{breakingNews.length} new article{breakingNews.length > 1 ? 's' : ''} detected</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBreakingAlert(false)}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-xl border-b border-white/10 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-4">

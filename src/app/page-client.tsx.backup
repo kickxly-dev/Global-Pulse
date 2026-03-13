@@ -187,6 +187,35 @@ export default function HomePageClient() {
     })
   }
 
+  /*
+  // Setup voice control
+  const {
+    isListening,
+    toggleListening,
+    readArticle,
+    showVoiceHelp
+  } = useVoiceControl({
+    onCommand: (cmd) => {
+      if (cmd === 'refresh') refresh()
+    },
+    onSearch: (query) => {
+      setSearchQuery(query)
+      addSearch(query)
+    },
+    onNavigate: (direction) => navigateCategory(direction),
+    onReadArticle: (index) => {
+      if (articles[index]) {
+        const article = articles[index]
+        readArticle({
+          title: article.title,
+          description: article.description || undefined,
+          source: article.source
+        })
+      }
+    }
+  })
+  */
+
   // Setup keyboard shortcuts
   const { showShortcutsHelp } = useKeyboardShortcuts({
     onRefresh: refresh,

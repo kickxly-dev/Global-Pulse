@@ -221,7 +221,10 @@ export default function HomePageClient() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-4"
             >
-              <Globe className="w-10 h-10 text-cyber-blue" />
+              <div className="relative group cursor-pointer">
+                <Globe className="w-10 h-10 text-cyber-blue group-hover:animate-spin-slow transition-all" />
+                <div className="absolute inset-0 bg-cyber-blue/20 rounded-full blur-xl group-hover:bg-cyber-blue/40 transition-all" />
+              </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink bg-clip-text text-transparent">
                   Global Pulse
@@ -231,6 +234,37 @@ export default function HomePageClient() {
             </motion.div>
             
             <div className="flex items-center space-x-2">
+              {/* Reading Modes */}
+              <div className="hidden md:flex items-center space-x-1 bg-white/5 rounded-lg p-1">
+                <button
+                  onClick={() => setTldrMode(!tldrMode)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    tldrMode ? 'bg-cyber-blue text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="TLDR Mode"
+                >
+                  TLDR
+                </button>
+                <button
+                  onClick={() => setSpeedReadMode(!speedReadMode)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    speedReadMode ? 'bg-cyber-purple text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Speed Read"
+                >
+                  Speed
+                </button>
+                <button
+                  onClick={() => setZenMode(!zenMode)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    zenMode ? 'bg-cyber-green text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Zen Mode"
+                >
+                  Zen
+                </button>
+              </div>
+
               <button
                 onClick={() => setShowBookmarks(true)}
                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all relative"

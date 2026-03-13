@@ -187,8 +187,17 @@ export default function HomePageClient() {
     toast.success(`Theme: ${nextTheme.toUpperCase()}`)
   }
 
+  // Filter articles based on reading mode
+  const filteredArticles = useMemo(() => {
+    let filtered = articles.slice(0, displayedCount)
+    if (zenMode) {
+      // Zen mode: only show first 3 articles, no images
+      filtered = filtered.slice(0, 3)
+    }
+    return filtered
+  }, [articles, displayedCount, zenMode])
+
   const categories = [
-    { id: 'general', name: 'General', icon: Globe },
     { id: 'technology', name: 'Tech', icon: Zap },
     { id: 'business', name: 'Business', icon: TrendingUp },
     { id: 'health', name: 'Health', icon: Activity },
@@ -367,16 +376,16 @@ export default function HomePageClient() {
               </div>
             ) : (
               <>
-                {articles.slice(0, displayedCount).map((article, index) => (
+                {filteredArticles.map((article, index) => (
                   <motion.article
                     key={article.url + index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05, duration: 0.3 }}
                     onClick={() => openArticle(article)}
-                    className="group bg-gray-900/50 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-cyber-blue/50 transition-all duration-300 cursor-pointer"
+                    className={`group bg-gray-900/50 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-cyber-blue/50 transition-all duration-300 cursor-pointer ${zenMode ? 'border-none bg-transparent' : ''}`}
                   >
-                    {article.urlToImage && (
+                    {!zenMode && article.urlToImage && (
                       <div className="relative h-48 overflow-hidden">
                         <img 
                           src={article.urlToImage} 
@@ -392,25 +401,27 @@ export default function HomePageClient() {
                         </div>
                       </div>
                     )}
-                    <div className="p-5">
-                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyber-blue transition-colors line-clamp-2">
+                    <div className={`p-5 ${zenMode ? 'text-center py-8' : ''}`}>
+                      <h3 className={`font-bold text-white mb-2 group-hover:text-cyber-blue transition-colors line-clamp-2 ${speedReadMode ? 'text-xl md:text-2xl' : 'text-lg'} ${tldrMode ? 'font-semibold' : ''}`}>
                         {article.title}
                       </h3>
-                      <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
-                        {article.description}
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
+                      {!tldrMode && (
+                        <p className={`text-gray-400 mb-4 line-clamp-2 leading-relaxed ${speedReadMode ? 'text-base' : 'text-sm'}`}>
+                          {article.description}
+                        </p>
+                      )}
+                      <div className={`flex items-center justify-between text-xs text-gray-500 ${zenMode ? 'hidden' : ''}`}>
                         <div className="flex items-center gap-2">
                           <Clock className="w-3 h-3" />
                           {new Date(article.publishedAt).toLocaleDateString()}
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-cyber-blue">
-                            {Math.ceil((article.content?.length || 0) / 1000)} min read
+                            {Math.ceil((article.content?.length || 0) / 1000) || 2} min read
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
+                      <div className={`flex items-center gap-2 mt-4 pt-4 border-t border-white/5 ${zenMode ? 'hidden' : ''}`}>
                         <button
                           onClick={(e) => toggleBookmark(article, e)}
                           className={`p-2 rounded-lg transition-all ${isBookmarked(article) ? 'bg-cyber-blue/20 text-cyber-blue' : 'bg-white/5 text-gray-400 hover:text-white'}`}

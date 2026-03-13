@@ -43,11 +43,12 @@ export default function HomePageClient() {
   
   const headerOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0.95])
   
-  const { articles, loading, error, refresh, lastRefresh } = useNewsData({
+  const { articles, loading, error, refresh, lastRefresh, newArticlesCount: hookNewCount, breakingNews } = useNewsData({
     category: selectedCategory,
     query: searchQuery,
     country: 'us',
-    refreshInterval: 60000
+    refreshInterval: 15000, // 15 seconds for real-time updates
+    autoRefresh: true
   })
   
   const { theme, changeTheme } = useTheme()
@@ -72,19 +73,21 @@ export default function HomePageClient() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const prevArticleCount = useRef(0)
+  // Show notification when hook detects new articles
   useEffect(() => {
-    if (articles.length > prevArticleCount.current && prevArticleCount.current > 0) {
-      const newCount = articles.length - prevArticleCount.current
-      setNewArticlesCount(newCount)
+    if (hookNewCount > 0) {
+      setNewArticlesCount(hookNewCount)
       setShowNewArticlesBadge(true)
-      toast.success(`${newCount} new article${newCount > 1 ? 's' : ''}!`, {
-        icon: '📰',
-        action: { label: 'View', onClick: () => { setShowNewArticlesBadge(false); setNewArticlesCount(0) }}
-      })
     }
-    prevArticleCount.current = articles.length
-  }, [articles.length])
+  }, [hookNewCount])
+
+  // Breaking news alert
+  useEffect(() => {
+    if (breakingNews && breakingNews.length > 0) {
+      // Flash the ticker
+      setTickerPaused(false)
+    }
+  }, [breakingNews])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -279,6 +282,52 @@ export default function HomePageClient() {
 
       {/* Main Content */}
       <main className="relative">
+        {/* Breaking News Alert */}
+        <AnimatePresence>
+          {breakingNews && breakingNews.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="bg-red-500/10 border-b border-red-500/20"
+            >
+              <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                  <span className="text-sm font-semibold text-red-400">BREAKING: {breakingNews[0]?.title}</span>
+                </div>
+                <button onClick={() => openArticle(breakingNews[0])} className="text-xs text-red-400 hover:text-red-300 font-medium">
+                  Read Now →
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* New Articles Banner */}
+        <AnimatePresence>
+          {showNewArticlesBadge && (
+            <motion.div
+              initial={{ y: -50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -50, opacity: 0 }}
+              className="fixed top-24 left-1/2 -translate-x-1/2 z-40"
+            >
+              <button
+                onClick={() => { setShowNewArticlesBadge(false); setNewArticlesCount(0); refresh(); }}
+                className="flex items-center gap-3 px-6 py-3 bg-emerald-500 text-white rounded-full shadow-lg shadow-emerald-500/30 font-medium hover:bg-emerald-600 transition-all"
+              >
+                <Bell className="w-5 h-5 animate-bounce" />
+                {newArticlesCount} new {newArticlesCount === 1 ? 'article' : 'articles'} available
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Hero Section */}
         {!loading && featuredArticle && !zenMode && (
           <section className="relative min-h-[80vh] flex items-end pb-20 pt-10">

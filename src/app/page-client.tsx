@@ -366,12 +366,15 @@ export default function HomePageClient() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-4">
             {loading && articles.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="relative">
-                  <Globe className="w-16 h-16 text-cyber-blue animate-spin-slow" />
-                  <div className="absolute inset-0 bg-cyber-blue/30 rounded-full blur-xl animate-pulse" />
-                </div>
-                <p className="text-gray-400 animate-pulse">Loading latest news...</p>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-gray-900/50 rounded-xl p-5 border border-white/10 animate-pulse">
+                    <div className="h-48 bg-gray-800 rounded-lg mb-4" />
+                    <div className="h-6 bg-gray-800 rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-gray-800 rounded w-full mb-2" />
+                    <div className="h-4 bg-gray-800 rounded w-2/3" />
+                  </div>
+                ))}
               </div>
             ) : error ? (
               <div className="text-center py-12">

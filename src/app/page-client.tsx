@@ -187,6 +187,7 @@ export default function HomePageClient() {
     })
   }
 
+  /*
   // Setup voice control
   const {
     isListening,
@@ -213,6 +214,7 @@ export default function HomePageClient() {
       }
     }
   })
+  */
 
   // Setup keyboard shortcuts
   const { showShortcutsHelp } = useKeyboardShortcuts({

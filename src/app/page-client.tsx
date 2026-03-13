@@ -456,11 +456,10 @@ export default function HomePageClient() {
       {selectedArticle && (
         <ModernArticleView
           article={selectedArticle}
+          allArticles={articles}
           isOpen={showArticle}
           onClose={() => setShowArticle(false)}
-          onShare={() => handleShare(selectedArticle)}
-          onBookmark={() => toggleBookmark(selectedArticle)}
-          isBookmarked={isBookmarked(selectedArticle)}
+          onArticleClick={openArticle}
         />
       )}
 

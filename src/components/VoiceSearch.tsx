@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MicOff, Search, X } from 'lucide-react'
-import { toast } from 'sonner'
 
 interface VoiceSearchProps {
   onResult: (transcript: string) => void
@@ -16,7 +15,6 @@ export default function VoiceSearch({ onResult, onClose }: VoiceSearchProps) {
 
   const startListening = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      toast.error('Voice search not supported in this browser')
       return
     }
 
@@ -41,7 +39,6 @@ export default function VoiceSearch({ onResult, onClose }: VoiceSearchProps) {
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error)
       setIsListening(false)
-      toast.error('Could not recognize speech')
     }
 
     recognition.onend = () => {

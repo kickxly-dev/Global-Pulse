@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { UserPreferences } from '@/types/news'
 import { Volume2, VolumeX, Moon, Clock } from 'lucide-react'
-import { toast } from 'sonner'
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   notificationsEnabled: false,
@@ -34,7 +33,6 @@ export default function Settings() {
     const updated = { ...preferences, ...newPrefs }
     setPreferences(updated)
     localStorage.setItem('userPreferences', JSON.stringify(updated))
-    toast.success('Settings saved')
   }
 
   return (

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -43,13 +42,8 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
         localStorage.setItem('userToken', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
         onAuth(data.user)
-        toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!')
         onClose()
-      } else {
-        toast.error(data.error || 'Authentication failed')
       }
-    } catch {
-      toast.error('Something went wrong')
     } finally {
       setLoading(false)
     }

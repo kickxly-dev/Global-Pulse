@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
-import { 
-  Globe, Bookmark, RefreshCw, Share2, 
-  X, Newspaper, Moon, Sun, Zap, 
+import {
+  Globe, Bookmark, RefreshCw, Share2,
+  X, Newspaper, Moon, Sun, Zap,
   Clock, BookOpen, Heart, Flame, ArrowRight, Menu, Sparkles, Radio, Bell, AlertTriangle,
   Search, ChevronUp, Eye, ThumbsUp, HelpCircle, Play, Pause, ArrowUpRight, TrendingUp,
   MessageCircle, Loader2, RefreshCcw, Sparkles as SparklesIcon, Mic
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useTheme } from '@/hooks/useTheme'
 import ModernArticleView from '@/components/ModernArticleView'
@@ -123,7 +122,6 @@ export default function HomePageClient() {
     localStorage.removeItem('userToken')
     localStorage.removeItem('user')
     setCurrentUser(null)
-    toast.success('Logged out')
   }
   
   const { theme, changeTheme } = useTheme()
@@ -270,7 +268,6 @@ export default function HomePageClient() {
     const idx = themes.indexOf(theme as any)
     const next = themes[(idx + 1) % themes.length]
     changeTheme(next)
-    toast.success(`${next.charAt(0).toUpperCase() + next.slice(1)} mode`)
   }, [theme, changeTheme])
 
   const isBookmarked = useCallback((article: any) => bookmarkedArticles.some(a => a.url === article.url), [bookmarkedArticles])
@@ -281,7 +278,6 @@ export default function HomePageClient() {
     const newBookmarks = isBookmarked(article) ? bookmarkedArticles.filter(a => a.url !== article.url) : [...bookmarkedArticles, article]
     setBookmarkedArticles(newBookmarks)
     localStorage.setItem('bookmarkedArticles', JSON.stringify(newBookmarks))
-    toast.success(isBookmarked(article) ? 'Removed' : 'Saved')
   }, [bookmarkedArticles, isBookmarked])
 
   const openArticle = useCallback((article: any) => { setSelectedArticle(article); setShowArticle(true) }, [])

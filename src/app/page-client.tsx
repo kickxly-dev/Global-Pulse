@@ -28,6 +28,10 @@ import CategoriesCarousel from '@/components/CategoriesCarousel'
 import AIRecommendations from '@/components/AIRecommendations'
 import SocialFeed from '@/components/SocialFeed'
 import BreakingNewsAlerts from '@/components/BreakingNewsAlerts'
+import SentimentDashboard from '@/components/SentimentDashboard'
+import NewsComparison from '@/components/NewsComparison'
+import FactCheckIntegration from '@/components/FactCheckIntegration'
+import NewsTranslation from '@/components/NewsTranslation'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -723,8 +727,10 @@ export default function HomePageClient() {
                   setShowArticle(true)
                 }}
               />
-              <TrendingSidebar />
-              <NewsQuiz />
+              <SentimentDashboard />
+              <NewsComparison />
+              <FactCheckIntegration article={selectedArticle} />
+              <NewsTranslation article={selectedArticle} />
             </div>
           </div>
         </section>

@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
-import {
+import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion'
+import { 
   Globe, Bookmark, RefreshCw, Share2,
   X, Newspaper, Moon, Sun, Zap,
   Clock, BookOpen, Heart, Flame, ArrowRight, Menu, Sparkles, Radio, Bell, AlertTriangle,
   Search, ChevronUp, Eye, ThumbsUp, HelpCircle, Play, Pause, ArrowUpRight, TrendingUp,
-  MessageCircle, Loader2, RefreshCcw, Sparkles as SparklesIcon, Mic
+  MessageCircle, Loader2, RefreshCcw, Sparkles as SparklesIcon, Mic, User
 } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useTheme } from '@/hooks/useTheme'
@@ -29,13 +29,15 @@ import AIRecommendations from '@/components/AIRecommendations'
 import SocialFeed from '@/components/SocialFeed'
 import BreakingNewsAlerts from '@/components/BreakingNewsAlerts'
 import SentimentDashboard from '@/components/SentimentDashboard'
+import ThemeSwitcher from '@/components/ThemeSwitcher'
+import LoadingState, { SkeletonLoader } from '@/components/LoadingState'
+import EnhancedGamification from '@/components/EnhancedGamification'
+import CollaborativeCuration from '@/components/CollaborativeCuration'
 import NewsComparison from '@/components/NewsComparison'
+import AudioSummary from '@/components/AudioSummary'
 import FactCheckIntegration from '@/components/FactCheckIntegration'
 import NewsTranslation from '@/components/NewsTranslation'
-import CollaborativeCuration from '@/components/CollaborativeCuration'
-import AudioSummary from '@/components/AudioSummary'
 import TrendPrediction from '@/components/TrendPrediction'
-import Gamification from '@/components/AdvancedGamification'
 import DeveloperAPI from '@/components/DeveloperAPI'
 import BookmarkCollections from '@/components/BookmarkCollections'
 import NewsletterGenerator from '@/components/NewsletterGenerator'
@@ -476,40 +478,44 @@ export default function HomePageClient() {
               <button onClick={() => setShowVoiceSearch(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-all"><Mic className="w-5 h-5 text-white/60" /></button>
               <button onClick={() => setShowTimeline(!showTimeline)} className={`p-2.5 rounded-full transition-all ${showTimeline ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-white/5'}`}><Clock className="w-5 h-5 text-white/60" /></button>
               <button onClick={() => setShowHelp(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-all"><HelpCircle className="w-5 h-5 text-white/60" /></button>
-              <div className="hidden md:flex items-center gap-1 ml-2 pl-2 border-l border-white/10">
-                <button onClick={() => setShowBookmarks(true)} className="relative p-2.5 rounded-full hover:bg-white/5 transition-all">
-                  <Bookmark className="w-5 h-5 text-white/60" />
-                  {bookmarkedArticles.length > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-white text-black text-[10px] font-bold rounded-full flex items-center justify-center">{bookmarkedArticles.length}</span>}
+              <div className="flex items-center gap-2 sm:gap-4">
+                <ThemeSwitcher />
+                <button 
+                  onClick={() => setShowBookmarks(true)} 
+                  className="relative p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  <Bookmark className="w-5 h-5" />
+                  {bookmarkedArticles.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                      {bookmarkedArticles.length}
+                    </span>
+                  )}
                 </button>
-                {showNewArticlesBadge && (
-                  <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} onClick={() => { setShowNewArticlesBadge(false); setNewArticlesCount(0); }} className="relative p-2.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 transition-all">
-                    <Bell className="w-5 h-5 text-emerald-400" />
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-emerald-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">{newArticlesCount}</span>
-                  </motion.button>
-                )}
-                <button onClick={() => setShowDailyDigest(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-all"><Newspaper className="w-5 h-5 text-white/60" /></button>
-                <button onClick={cycleTheme} className="p-2.5 rounded-full hover:bg-white/5 transition-all">
-                  {theme === 'light' ? <Sun className="w-5 h-5 text-amber-400" /> : theme === 'dark' ? <Moon className="w-5 h-5 text-white/60" /> : <Zap className="w-5 h-5 text-cyan-400" />}
+                <button 
+                  onClick={() => setShowAuth(true)} 
+                  className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  <User className="w-5 h-5" />
                 </button>
-                <button onClick={refresh} disabled={loading} className="p-2.5 rounded-full hover:bg-white/5 transition-all disabled:opacity-30">
-                  <RefreshCw className={`w-5 h-5 text-white/60 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-                {/* User Auth Button */}
-                {currentUser ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-sm font-bold">
-                      {currentUser.name?.[0]?.toUpperCase() || currentUser.email[0].toUpperCase()}
-                    </div>
-                    <button onClick={handleLogout} className="text-xs text-white/40 hover:text-white transition-colors">
-                      Logout
-                    </button>
+              </div>  
+              <button onClick={refresh} disabled={loading} className="p-2.5 rounded-full hover:bg-white/5 transition-all disabled:opacity-30">
+                <RefreshCw className={`w-5 h-5 text-white/60 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+              {/* User Auth Button */}
+              {currentUser ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-sm font-bold">
+                    {currentUser.name?.[0]?.toUpperCase() || currentUser.email[0].toUpperCase()}
                   </div>
-                ) : (
-                  <button onClick={() => setShowAuth(true)} className="px-4 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-sm font-medium hover:opacity-90 transition-opacity">
-                    Sign In
+                  <button onClick={handleLogout} className="text-xs text-white/40 hover:text-white transition-colors">
+                    Logout
                   </button>
-                )}
-              </div>
+                </div>
+              ) : (
+                <button onClick={() => setShowAuth(true)} className="px-4 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-sm font-medium hover:opacity-90 transition-opacity">
+                  Sign In
+                </button>
+              )}
               <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2.5 rounded-full hover:bg-white/5 transition-all ml-2"><Menu className="w-5 h-5 text-white/60" /></button>
             </div>
           </div>
@@ -696,19 +702,42 @@ export default function HomePageClient() {
         {/* Trending Bar */}
         {!loading && trendingArticles.length > 0 && !zenMode && (
           <section className="border-y border-white/5 bg-white/[0.02]">
-            <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
               <div className="flex items-center gap-3 mb-3">
                 <TrendingUp className="w-4 h-4 text-white/40" />
                 <span className="text-xs font-semibold tracking-wider text-white/40 uppercase">Trending Now</span>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {trendingArticles.map((article, idx) => (
-                  <motion.button key={article.url} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} onClick={() => openArticle(article)} className="group text-left p-3 rounded-xl border border-white/5 hover:border-white/20 hover:bg-white/5 transition-all">
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl font-bold text-white/20 group-hover:text-white/40 transition-colors">{String(idx + 2).padStart(2, '0')}</span>
+                  <motion.button 
+                    key={article.url} 
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: idx * 0.1 }}
+                    whileHover={{ 
+                      scale: 1.02,
+                      y: -2,
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+                      transition: { duration: 0.2 }
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => openArticle(article)} 
+                    className="group text-left p-3 rounded-xl border border-white/5 hover:border-white/20 hover:bg-white/5 transition-all duration-300 relative overflow-hidden"
+                  >
+                    {/* Hover gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    <div className="flex items-start gap-3 relative">
+                      <motion.span 
+                        className="text-xl sm:text-2xl font-bold text-white/20 group-hover:text-white/40 transition-colors duration-300"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {String(idx + 2).padStart(2, '0')}
+                      </motion.span>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm line-clamp-2 group-hover:text-white transition-colors">{article.title}</h3>
-                        <p className="text-xs text-white/40 mt-1">{article.source?.name}</p>
+                        <h3 className="font-medium text-sm line-clamp-2 group-hover:text-white transition-colors duration-300">{article.title}</h3>
+                        <p className="text-xs text-white/40 mt-1 group-hover:text-white/60 transition-colors duration-300">{article.source?.name}</p>
                       </div>
                     </div>
                   </motion.button>
@@ -719,7 +748,7 @@ export default function HomePageClient() {
         )}
 
         {/* Main Content with Sidebar */}
-        <section className="max-w-7xl mx-auto px-6 py-4">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           {/* Categories Carousel */}
           <div className="mb-4">
             <CategoriesCarousel 
@@ -728,7 +757,7 @@ export default function HomePageClient() {
             />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
             {/* Main Column */}
             <div className="lg:col-span-2 space-y-4">
               {/* Timeline Toggle */}
@@ -738,7 +767,7 @@ export default function HomePageClient() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="bg-white/[0.02] rounded-xl p-4 border border-white/5"
+                    className="bg-white/[0.02] rounded-xl p-3 sm:p-4 border border-white/5"
                   >
                     <NewsTimeline />
                   </motion.div>
@@ -746,13 +775,13 @@ export default function HomePageClient() {
               </AnimatePresence>
 
               {/* Articles Grid */}
-              <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-white/[0.02] rounded-xl p-3 sm:p-4 border border-white/5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                   <div>
-                    <h2 className="text-xl font-bold">Latest Stories</h2>
+                    <h2 className="text-lg sm:text-xl font-bold">Latest Stories</h2>
                     <p className="text-xs text-white/40 mt-1">{articles.length} articles • Updated {lastRefresh ? new Date(lastRefresh).toLocaleTimeString() : '—'}</p>
                   </div>
-                  <div className="hidden md:flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <button onClick={() => { setTldrMode(!tldrMode); setSpeedReadMode(false); setZenMode(false); }} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${tldrMode ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>TLDR</button>
                     <button onClick={() => { setSpeedReadMode(!speedReadMode); setTldrMode(false); setZenMode(false); }} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${speedReadMode ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>Speed</button>
                     <button onClick={() => { setZenMode(!zenMode); setTldrMode(false); setSpeedReadMode(false); }} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${zenMode ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>Zen</button>
@@ -786,34 +815,54 @@ export default function HomePageClient() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05 }}
+                        whileHover={{ 
+                          y: -4,
+                          boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+                          transition: { duration: 0.2 }
+                        }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => openArticle(article)}
-                        className="group rounded-xl bg-white/5 border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-all"
+                        className="group rounded-xl bg-white/5 border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-all duration-300 relative"
                       >
+                        {/* Hover overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                        
                         {article.urlToImage && (
-                          <div className="aspect-[16/10] overflow-hidden">
+                          <div className="aspect-[16/10] overflow-hidden relative">
                             <img 
                               src={article.urlToImage} 
                               alt="" 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                         )}
-                        <div className="p-3">
+                        <div className="p-3 relative">
                           <div className="flex items-center justify-between mb-2">
-                            <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${getCategoryStyle(article.category || 'general')}`}>
+                            <motion.span 
+                              className={`px-2 py-0.5 text-xs font-bold rounded-full ${getCategoryStyle(article.category || 'general')}`}
+                              whileHover={{ scale: 1.05 }}
+                              transition={{ duration: 0.2 }}
+                            >
                               {article.category || 'General'}
-                            </span>
-                            <span className="text-xs text-white/40">{getReadingTime(article.content || article.description || '')} min</span>
+                            </motion.span>
+                            <motion.span 
+                              className="text-xs text-white/40"
+                              whileHover={{ color: "#fff" }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              {getReadingTime(article.content || article.description || '')} min
+                            </motion.span>
                           </div>
-                          <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-white transition-colors">
+                          <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-white transition-colors duration-300">
                             {article.title}
                           </h3>
-                          <p className="text-xs text-white/60 mb-2 line-clamp-2">
+                          <p className="text-xs text-white/60 mb-2 line-clamp-2 group-hover:text-white/80 transition-colors duration-300">
                             {article.description}
                           </p>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-white/40">{article.source?.name}</span>
-                            <span className="text-xs text-white/40">{new Date(article.publishedAt).toLocaleDateString()}</span>
+                            <span className="text-xs text-white/40 group-hover:text-white/60 transition-colors duration-300">{article.source?.name}</span>
+                            <span className="text-xs text-white/40 group-hover:text-white/60 transition-colors duration-300">{new Date(article.publishedAt).toLocaleDateString()}</span>
                           </div>
                         </div>
                       </motion.article>
@@ -840,7 +889,7 @@ export default function HomePageClient() {
               <BiasDetection article={selectedArticle} />
               <InteractiveData article={selectedArticle} />
               <SocialReading article={selectedArticle} />
-              <Gamification />
+              <EnhancedGamification userId={currentUser?.id} />
               <TrendPrediction />
               <SentimentDashboard />
               <NewsComparison />

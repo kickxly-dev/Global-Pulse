@@ -6,7 +6,7 @@ import {
   getUserStats,
   trackArticleInteraction,
   type UserProfile
-} from '@/lib/database'
+} from '@/lib/client-db'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Plus, ThumbsUp, ThumbsDown, CheckCircle, Clock, TrendingUp, Star } from 'lucide-react'
 

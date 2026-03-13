@@ -29,7 +29,7 @@ import {
   type LeaderboardEntry,
   type DailyChallenge,
   type UserChallenge
-} from '@/lib/database'
+} from '@/lib/client-db'
 
 interface StreakData {
   current: number

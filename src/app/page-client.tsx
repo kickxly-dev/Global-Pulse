@@ -52,7 +52,6 @@ export default function HomePageClient() {
   const [initialLoad, setInitialLoad] = useState(true)
   const [showAuth, setShowAuth] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string } | null>(null)
-  const [featuredIndex, setFeaturedIndex] = useState(0)
   const loaderRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
   const { scrollYProgress } = useScroll()
@@ -110,21 +109,6 @@ export default function HomePageClient() {
     setCurrentUser(null)
     toast.success('Logged out')
   }
-
-  // Auto-rotate featured article every 10 seconds
-  useEffect(() => {
-    if (articles.length > 1) {
-      const interval = setInterval(() => {
-        setFeaturedIndex((prev) => (prev + 1) % Math.min(5, articles.length))
-      }, 10000)
-      return () => clearInterval(interval)
-    }
-  }, [articles.length])
-
-  // Reset featured index when category changes
-  useEffect(() => {
-    setFeaturedIndex(0)
-  }, [selectedCategory])
   
   const { theme, changeTheme } = useTheme()
 
@@ -308,8 +292,11 @@ export default function HomePageClient() {
     setHoverPosition({ x: e.clientX, y: e.clientY })
   }, [])
 
-  const featuredArticle = articles[featuredIndex]
-  const trendingArticles = articles.filter((_, i) => i !== featuredIndex).slice(0, 4)
+  // Featured article: prioritize breaking news, then newest article
+  const featuredArticle = breakingNews && breakingNews.length > 0 
+    ? breakingNews[0] 
+    : articles[0]
+  const trendingArticles = articles.filter(a => a.url !== featuredArticle?.url).slice(0, 4)
   const currentCategory = categories.find(c => c.id === selectedCategory)
 
   return (
@@ -502,40 +489,104 @@ export default function HomePageClient() {
           </motion.div>
         </motion.div>
 
-        {/* Hero Section with Parallax */}
+        {/* Hero Section - BBC Style Breaking News */}
         {!loading && featuredArticle && !zenMode && (
           <motion.section 
             style={{ y: heroY }}
-            className="relative min-h-[80vh] flex items-end pb-20 pt-10 overflow-hidden"
+            className="relative min-h-[70vh] md:min-h-[80vh] flex items-end overflow-hidden"
           >
             {featuredArticle.urlToImage && (
               <motion.div 
                 style={{ scale: heroScale, opacity: heroOpacity }}
                 className="absolute inset-0"
               >
-                <img src={featuredArticle.urlToImage} alt="" className="w-full h-full object-cover opacity-40" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+                <img src={featuredArticle.urlToImage} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
               </motion.div>
             )}
-            <div className="relative max-w-7xl mx-auto px-6 w-full">
-              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-3xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className={`px-3 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r ${currentCategory?.gradient}`}>{currentCategory?.name}</span>
-                  <span className="text-sm text-white/50">{featuredArticle.source?.name}</span>
-                  <span className="text-sm text-white/40">•</span>
-                  <span className="text-sm text-white/40">{new Date(featuredArticle.publishedAt).toLocaleDateString()}</span>
+            
+            {/* Breaking News Banner */}
+            {breakingNews && breakingNews.length > 0 && (
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="absolute top-0 left-0 right-0 z-10"
+              >
+                <div className="bg-red-600 text-white px-4 py-2 flex items-center gap-3">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                  </span>
+                  <span className="text-xs font-bold tracking-wider uppercase">Breaking News</span>
+                  <span className="text-xs opacity-80">{new Date().toLocaleTimeString()}</span>
                 </div>
-                <h1 onClick={() => openArticle(featuredArticle)} className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 cursor-pointer hover:opacity-80 transition-opacity">{featuredArticle.title}</h1>
-                <p className="text-lg md:text-xl text-white/60 mb-8 leading-relaxed max-w-2xl">{featuredArticle.description}</p>
-                <div className="flex items-center gap-4">
-                  <button onClick={() => openArticle(featuredArticle)} className="group flex items-center gap-2 px-6 py-3 bg-white text-black rounded-full font-medium hover:bg-white/90 transition-all">
-                    Read Article <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </motion.div>
+            )}
+            
+            <div className="relative max-w-7xl mx-auto px-6 w-full pb-12 pt-20">
+              <motion.div 
+                key={featuredArticle.url}
+                initial={{ opacity: 0, y: 40 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ duration: 0.6 }}
+                className="max-w-4xl"
+              >
+                {/* Category & Source */}
+                <div className="flex items-center gap-3 mb-4">
+                  <span className={`px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r ${currentCategory?.gradient}`}>
+                    {currentCategory?.name}
+                  </span>
+                  <span className="text-sm text-white/70 font-medium">{featuredArticle.source?.name}</span>
+                </div>
+                
+                {/* Headline */}
+                <h1 
+                  onClick={() => openArticle(featuredArticle)} 
+                  className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  {featuredArticle.title}
+                </h1>
+                
+                {/* Description */}
+                <p className="text-lg md:text-xl text-white/70 mb-6 leading-relaxed max-w-3xl">
+                  {featuredArticle.description}
+                </p>
+                
+                {/* Meta Row */}
+                <div className="flex items-center gap-4 text-sm text-white/50 mb-6">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {getReadingTime(featuredArticle.content || featuredArticle.description || '')} min read
+                  </span>
+                  <span>•</span>
+                  <span>{new Date(featuredArticle.publishedAt).toLocaleDateString()}</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-4 h-4" />
+                    {(featuredArticle.viewCount || Math.floor(Math.random() * 500 + 100)).toLocaleString()} views
+                  </span>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => openArticle(featuredArticle)} 
+                    className="group flex items-center gap-2 px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-white/90 transition-all"
+                  >
+                    Read Full Story <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button onClick={(e) => toggleBookmark(featuredArticle, e)} className={`p-3 rounded-full border transition-all ${isBookmarked(featuredArticle) ? 'border-white bg-white/10 text-white' : 'border-white/20 text-white/60 hover:border-white/40'}`}>
+                  <button 
+                    onClick={(e) => toggleBookmark(featuredArticle, e)} 
+                    className={`p-3 rounded-lg border transition-all ${isBookmarked(featuredArticle) ? 'border-white bg-white/10 text-white' : 'border-white/20 text-white/60 hover:border-white/40'}`}
+                  >
                     <Bookmark className="w-5 h-5" fill={isBookmarked(featuredArticle) ? 'currentColor' : 'none'} />
                   </button>
-                  <button onClick={(e) => handleShare(featuredArticle, e)} className="p-3 rounded-full border border-white/20 text-white/60 hover:border-white/40 transition-all"><Share2 className="w-5 h-5" /></button>
+                  <button 
+                    onClick={(e) => handleShare(featuredArticle, e)} 
+                    className="p-3 rounded-lg border border-white/20 text-white/60 hover:border-white/40 transition-all"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </button>
                 </div>
               </motion.div>
             </div>

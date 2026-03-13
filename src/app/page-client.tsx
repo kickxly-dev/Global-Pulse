@@ -42,6 +42,7 @@ import NewsletterGenerator from '@/components/NewsletterGenerator'
 import StoryThreading from '@/components/StoryThreading'
 import SmartSummarization from '@/components/SmartSummarization'
 import LiveUpdateTracking from '@/components/LiveUpdateTracking'
+import BiasDetection from '@/components/BiasDetection'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -740,6 +741,7 @@ export default function HomePageClient() {
               <StoryThreading article={selectedArticle} />
               <SmartSummarization article={selectedArticle} />
               <LiveUpdateTracking article={selectedArticle} />
+              <BiasDetection article={selectedArticle} />
               <Gamification />
               <TrendPrediction />
               <SentimentDashboard />

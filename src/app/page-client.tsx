@@ -189,13 +189,28 @@ export default function HomePageClient() {
 
   // Filter articles based on reading mode
   const filteredArticles = useMemo(() => {
-    let filtered = articles.slice(0, displayedCount)
+    let filtered = [...articles]
+    
+    // Zen mode: only show first 3 articles
     if (zenMode) {
-      // Zen mode: only show first 3 articles, no images
       filtered = filtered.slice(0, 3)
     }
-    return filtered
-  }, [articles, displayedCount, zenMode])
+    
+    // TLDR mode: filter to show only articles with short descriptions (priority to concise content)
+    if (tldrMode) {
+      filtered = filtered.filter(a => (a.description?.length || 0) < 200)
+        .sort((a, b) => (a.description?.length || 0) - (b.description?.length || 0))
+    }
+    
+    // Speed Read mode: prioritize recent articles and limit count
+    if (speedReadMode) {
+      filtered = filtered
+        .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+        .slice(0, Math.min(10, filtered.length))
+    }
+    
+    return filtered.slice(0, displayedCount)
+  }, [articles, displayedCount, zenMode, tldrMode, speedReadMode])
 
   const categories = [
     { id: 'technology', name: 'Tech', icon: Zap },

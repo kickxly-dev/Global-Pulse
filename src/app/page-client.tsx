@@ -241,19 +241,23 @@ export default function HomePageClient() {
           </div>
           
           <div className="flex items-center space-x-1 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-                  selectedCategory === category.id
-                    ? 'bg-cyber-blue text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span className="text-sm font-medium">{category.name}</span>
-              </button>
-            ))}
+            {categories.map((category) => {
+              const Icon = category.icon
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
+                    selectedCategory === category.id
+                      ? 'bg-cyber-blue text-white shadow-lg shadow-cyber-blue/25'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{category.name}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
       </header>
@@ -261,9 +265,10 @@ export default function HomePageClient() {
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-4">
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <RefreshCw className="w-8 h-8 text-cyber-blue animate-spin" />
+            {loading && articles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                <RefreshCw className="w-12 h-12 text-cyber-blue animate-spin" />
+                <p className="text-gray-400">Loading latest news...</p>
               </div>
             ) : error ? (
               <div className="text-center py-12">
@@ -353,7 +358,10 @@ export default function HomePageClient() {
             </div>
             
             <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <h3 className="text-lg font-semibold text-white mb-4">Stats</h3>
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-cyber-blue" />
+                Stats
+              </h3>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Articles</span>

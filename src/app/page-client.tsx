@@ -29,6 +29,7 @@ import SharePanel from '@/components/SharePanel'
 import LiveVideoSection from '@/components/LiveVideoSection'
 import NewsArchive from '@/components/NewsArchive'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
+import CategoriesCarousel from '@/components/CategoriesCarousel'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -686,6 +687,14 @@ export default function HomePageClient() {
 
         {/* Main Content with Sidebar */}
         <section className="max-w-7xl mx-auto px-6 py-8">
+          {/* Categories Carousel */}
+          <div className="mb-6">
+            <CategoriesCarousel 
+              selectedCategory={selectedCategory} 
+              onCategoryChange={setSelectedCategory} 
+            />
+          </div>
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Column */}
             <div className="lg:col-span-2">

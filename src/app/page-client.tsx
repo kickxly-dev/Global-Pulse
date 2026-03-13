@@ -35,6 +35,7 @@ import NewsTranslation from '@/components/NewsTranslation'
 import CollaborativeCuration from '@/components/CollaborativeCuration'
 import AudioSummary from '@/components/AudioSummary'
 import TrendPrediction from '@/components/TrendPrediction'
+import Gamification from '@/components/Gamification'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -730,6 +731,7 @@ export default function HomePageClient() {
                   setShowArticle(true)
                 }}
               />
+              <Gamification />
               <TrendPrediction />
               <SentimentDashboard />
               <NewsComparison />

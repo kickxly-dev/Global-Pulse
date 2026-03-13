@@ -512,12 +512,12 @@ export default function HomePageClient() {
         speedReadMode={speedReadMode}
         zenMode={zenMode}
         djMode={djMode}
-        voiceEnabled={isListening}
+        voiceEnabled={false}
         onTldrToggle={() => setTldrMode(prev => !prev)}
         onSpeedReadToggle={() => setSpeedReadMode(prev => !prev)}
         onZenToggle={() => setZenMode(prev => !prev)}
         onDjToggle={() => setDjMode(prev => !prev)}
-        onVoiceToggle={toggleListening}
+        onVoiceToggle={() => {}}
         bookmarkCount={bookmarkedArticles.length}
       />
 

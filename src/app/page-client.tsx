@@ -27,6 +27,7 @@ import VoiceSearch from '@/components/VoiceSearch'
 import NewsQuiz from '@/components/NewsQuiz'
 import SharePanel from '@/components/SharePanel'
 import LiveVideoSection from '@/components/LiveVideoSection'
+import NewsArchive from '@/components/NewsArchive'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -665,6 +666,7 @@ export default function HomePageClient() {
               <LiveVideoSection />
               <NewsPodcast />
               <NewsQuiz />
+              <NewsArchive />
             </div>
           </div>
         </section>

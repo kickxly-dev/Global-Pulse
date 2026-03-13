@@ -16,6 +16,8 @@ import ModernArticleView from '@/components/ModernArticleView'
 import ShareModal from '@/components/ShareModal'
 import DailyDigest from '@/components/DailyDigest'
 import WorldMap from '@/components/WorldMap'
+import CleanLoader from '@/components/CleanLoader'
+import OfflineIndicator from '@/components/OfflineIndicator'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -45,6 +47,8 @@ export default function HomePageClient() {
   const [pullDistance, setPullDistance] = useState(0)
   const [aiSummary, setAiSummary] = useState<string | null>(null)
   const [loadingSummary, setLoadingSummary] = useState(false)
+  const [isOnline, setIsOnline] = useState(true)
+  const [initialLoad, setInitialLoad] = useState(true)
   const loaderRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
   const { scrollYProgress } = useScroll()
@@ -63,6 +67,26 @@ export default function HomePageClient() {
     refreshInterval: 15000, // 15 seconds for real-time updates
     autoRefresh: true
   })
+
+  // Track online status
+  useEffect(() => {
+    setIsOnline(navigator.onLine)
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Hide initial loader after first load
+  useEffect(() => {
+    if (!loading && articles.length > 0) {
+      setTimeout(() => setInitialLoad(false), 500)
+    }
+  }, [loading, articles])
   
   const { theme, changeTheme } = useTheme()
 
@@ -252,6 +276,14 @@ export default function HomePageClient() {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Initial Loading Animation */}
+      <AnimatePresence>
+        {initialLoad && <CleanLoader />}
+      </AnimatePresence>
+      
+      {/* Offline Indicator */}
+      <OfflineIndicator isOnline={isOnline} onRetry={refresh} />
+      
       {/* Ambient Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-black to-black" />

@@ -1,54 +1,95 @@
-const CACHE_NAME = 'global-pulse-v1'
-const urlsToCache = [
+const CACHE_NAME = 'global-pulse-v2'
+const STATIC_CACHE = 'gp-static-v2'
+const DYNAMIC_CACHE = 'gp-dynamic-v2'
+
+const STATIC_ASSETS = [
   '/',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
 ]
 
-// Install event
+const API_PATTERNS = [
+  /\/api\/articles/,
+  /\/api\/news/,
+]
+
+// Install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache')
-      return cache.addAll(urlsToCache)
-    })
+    Promise.all([
+      caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)),
+      caches.open(DYNAMIC_CACHE),
+    ])
   )
   self.skipWaiting()
 })
 
-// Fetch event
+// Fetch event - network first for API, cache first for static
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response
-      }
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+  const { request } = event
+  const url = new URL(request.url)
+
+  // API requests - network first, fallback to cache
+  if (API_PATTERNS.some(pattern => pattern.test(url.pathname))) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const responseClone = response.clone()
+          caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(request, responseClone)
+          })
           return response
-        }
-        const responseToCache = response.clone()
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache)
         })
-        return response
+        .catch(() => {
+          return caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse
+            }
+            return new Response(JSON.stringify({ 
+              offline: true, 
+              articles: [],
+              message: 'You are offline.' 
+            }), {
+              headers: { 'Content-Type': 'application/json' }
+            })
+          })
+        })
+    )
+    return
+  }
+
+  // Static assets - cache first
+  if (request.method === 'GET') {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse
+        }
+        return fetch(request).then((response) => {
+          if (!response || response.status !== 200) {
+            return response
+          }
+          const responseClone = response.clone()
+          caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(request, responseClone)
+          })
+          return response
+        })
       })
-    })
-  )
+    )
+  }
 })
 
-// Activate event
+// Activate event - clean old caches
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME]
+  const validCaches = [STATIC_CACHE, DYNAMIC_CACHE]
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName)
-          }
-        })
+        cacheNames
+          .filter((name) => !validCaches.includes(name))
+          .map((name) => caches.delete(name))
       )
     })
   )
@@ -57,43 +98,51 @@ self.addEventListener('activate', (event) => {
 
 // Push notification event
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {}
-  const title = data.title || 'Global Pulse'
+  const data = event.data?.json() || {}
+  
   const options = {
-    body: data.body || 'New news update available',
+    body: data.body || 'New breaking news available',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    vibrate: [200, 100, 200],
-    data: data.data || {},
+    vibrate: [100, 50, 100],
+    tag: data.tag || 'news-update',
+    renotify: true,
+    requireInteraction: data.important || false,
+    data: {
+      url: data.url || '/',
+      id: data.id,
+    },
     actions: [
       { action: 'open', title: 'Read Now' },
-      { action: 'close', title: 'Close' },
+      { action: 'close', title: 'Dismiss' },
     ],
   }
 
-  event.waitUntil(self.registration.showNotification(title, options))
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Global Pulse', options)
+  )
 })
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
-  if (event.action === 'open' || !event.action) {
-    const urlToOpen = event.notification.data.url || '/'
-    event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-        for (let i = 0; i < windowClients.length; i++) {
-          const client = windowClients[i]
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus()
-          }
+  if (event.action === 'close') return
+
+  const urlToOpen = event.notification.data.url || '/'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus()
         }
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen)
-        }
-      })
-    )
-  }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen)
+      }
+    })
+  )
 })
 
 // Background sync
@@ -105,9 +154,15 @@ self.addEventListener('sync', (event) => {
 
 async function syncNews() {
   try {
-    const response = await fetch('/api/news?category=general&country=us')
+    const response = await fetch('/api/articles?category=general&country=us&limit=20')
     const data = await response.json()
-    console.log('Background sync completed:', data)
+    
+    const cache = await caches.open(DYNAMIC_CACHE)
+    await cache.put(
+      new Request('/api/articles?category=general'),
+      new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } })
+    )
+    console.log('Background sync completed')
   } catch (error) {
     console.error('Background sync failed:', error)
   }

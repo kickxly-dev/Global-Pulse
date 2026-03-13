@@ -4,13 +4,14 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Globe, Search, Bookmark, RefreshCw, AlertCircle, Share2, 
-  X, Newspaper, Moon, Sun, Zap, ExternalLink
+  X, Newspaper, Moon, Sun, Zap, ExternalLink, TrendingUp, Activity, Brain, Trophy, Film
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useTheme } from '@/hooks/useTheme'
 import ModernArticleView from '@/components/ModernArticleView'
 import ShareModal from '@/components/ShareModal'
+import DailyDigest from '@/components/DailyDigest'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -21,6 +22,7 @@ export default function HomePageClient() {
   const [showArticle, setShowArticle] = useState(false)
   const [shareArticle, setShareArticle] = useState<any>(null)
   const [showShare, setShowShare] = useState(false)
+  const [showDailyDigest, setShowDailyDigest] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
   const { articles, loading, error, refresh, lastRefresh } = useNewsData({
@@ -86,13 +88,13 @@ export default function HomePageClient() {
   }
 
   const categories = [
-    { id: 'general', name: 'General' },
-    { id: 'technology', name: 'Technology' },
-    { id: 'business', name: 'Business' },
-    { id: 'health', name: 'Health' },
-    { id: 'science', name: 'Science' },
-    { id: 'sports', name: 'Sports' },
-    { id: 'entertainment', name: 'Entertainment' },
+    { id: 'general', name: 'General', icon: Globe },
+    { id: 'technology', name: 'Tech', icon: Zap },
+    { id: 'business', name: 'Business', icon: TrendingUp },
+    { id: 'health', name: 'Health', icon: Activity },
+    { id: 'science', name: 'Science', icon: Brain },
+    { id: 'sports', name: 'Sports', icon: Trophy },
+    { id: 'entertainment', name: 'Entertainment', icon: Film },
   ]
 
   return (
@@ -125,6 +127,13 @@ export default function HomePageClient() {
                     {bookmarkedArticles.length}
                   </span>
                 )}
+              </button>
+              
+              <button
+                onClick={() => setShowDailyDigest(true)}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+              >
+                <Newspaper className="w-5 h-5 text-gray-300" />
               </button>
               
               <button
@@ -378,6 +387,12 @@ export default function HomePageClient() {
           onClose={() => setShowShare(false)}
         />
       )}
+      
+      {/* Daily Digest */}
+      <DailyDigest
+        isOpen={showDailyDigest}
+        onClose={() => setShowDailyDigest(false)}
+      />
     </div>
   )
 }

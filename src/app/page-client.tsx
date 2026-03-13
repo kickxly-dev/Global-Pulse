@@ -283,10 +283,10 @@ export default function HomePageClient() {
 
   return (
     <div className={`min-h-screen bg-cyber-darker ${theme === 'light' ? 'theme-light' : theme === 'dark' ? 'theme-dark' : 'theme-cyber'}`}>
-        <NotificationManager />
-        <LiveDataStream />
-        <NewStoryPulse trigger={newStoryAnimation} />
-        <BreakingNewsAlert show={breakingNewsAlert} />
+      <NotificationManager />
+      <LiveDataStream />
+      <NewStoryPulse trigger={newStoryAnimation} />
+      <BreakingNewsAlert show={breakingNewsAlert} />
       
       {/* Header - Modern Glassmorphism */}
       <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-xl border-b border-white/10 shadow-lg">

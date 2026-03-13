@@ -12,6 +12,7 @@ import { useTheme } from '@/hooks/useTheme'
 import ModernArticleView from '@/components/ModernArticleView'
 import ShareModal from '@/components/ShareModal'
 import DailyDigest from '@/components/DailyDigest'
+import AutoRefreshIndicator from '@/components/AutoRefreshIndicator'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -25,6 +26,10 @@ export default function HomePageClient() {
   const [showDailyDigest, setShowDailyDigest] = useState(false)
   const [breakingNews, setBreakingNews] = useState<any[]>([])
   const [showBreakingAlert, setShowBreakingAlert] = useState(false)
+  const [tldrMode, setTldrMode] = useState(false)
+  const [speedReadMode, setSpeedReadMode] = useState(false)
+  const [zenMode, setZenMode] = useState(false)
+  const [displayedCount, setDisplayedCount] = useState(10)
   const previousArticleCount = useRef(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
@@ -507,6 +512,12 @@ export default function HomePageClient() {
       <DailyDigest
         isOpen={showDailyDigest}
         onClose={() => setShowDailyDigest(false)}
+      />
+      
+      {/* Auto Refresh Indicator */}
+      <AutoRefreshIndicator
+        isAutoRefreshing={loading}
+        lastRefresh={lastRefresh}
       />
     </div>
   )

@@ -385,181 +385,144 @@ export default function HomePageClient() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3 space-y-4">
-            {loading && articles.length === 0 ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-gray-900/50 rounded-xl p-5 border border-white/10 animate-pulse">
-                    <div className="h-48 bg-gray-800 rounded-lg mb-4" />
-                    <div className="h-6 bg-gray-800 rounded w-3/4 mb-2" />
-                    <div className="h-4 bg-gray-800 rounded w-full mb-2" />
-                    <div className="h-4 bg-gray-800 rounded w-2/3" />
-                  </div>
-                ))}
+        {/* Reading Mode Status */}
+        {(tldrMode || speedReadMode || zenMode) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-cyber-blue/10 border border-cyber-blue/20 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              {tldrMode && <Zap className="w-5 h-5 text-cyber-blue" />}
+              {speedReadMode && <Clock className="w-5 h-5 text-cyber-purple" />}
+              {zenMode && <BookOpen className="w-5 h-5 text-cyber-green" />}
+              <span className="text-sm">
+                {tldrMode && 'TLDR Mode: Showing short articles only'}
+                {speedReadMode && 'Speed Read: Showing 10 most recent articles'}
+                {zenMode && 'Zen Mode: Showing 3 articles for focused reading'}
+              </span>
+            </div>
+            <button
+              onClick={() => { setTldrMode(false); setSpeedReadMode(false); setZenMode(false); }}
+              className="text-xs text-cyber-blue hover:underline"
+            >
+              Disable
+            </button>
+          </motion.div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading && articles.length === 0 ? (
+            // Loading skeletons
+            [1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-gray-800/50 rounded-xl overflow-hidden animate-pulse">
+                <div className="h-48 bg-gray-700" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-gray-700 rounded w-3/4" />
+                  <div className="h-3 bg-gray-700 rounded w-full" />
+                  <div className="h-3 bg-gray-700 rounded w-2/3" />
+                </div>
               </div>
-            ) : error ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400">{error}</p>
-                <button
-                  onClick={refresh}
-                  className="mt-4 px-4 py-2 bg-cyber-blue rounded-lg text-white hover:bg-cyber-blue/80 transition-all"
+            ))
+          ) : error ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-400 mb-4">{error}</p>
+              <button
+                onClick={refresh}
+                className="px-6 py-2 bg-cyber-blue text-white rounded-lg hover:bg-cyber-blue/80 transition-all"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <>
+              {filteredArticles.map((article, index) => (
+                <motion.article
+                  key={article.url + index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  onClick={() => openArticle(article)}
+                  className="group bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-cyber-blue/50 hover:shadow-lg hover:shadow-cyber-blue/10 transition-all duration-300 cursor-pointer"
                 >
-                  Try Again
-                </button>
-              </div>
-            ) : (
-              <>
-                {filteredArticles.map((article, index) => (
-                  <motion.article
-                    key={article.url + index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05, duration: 0.3 }}
-                    onClick={() => openArticle(article)}
-                    className={`group bg-gray-900/50 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-cyber-blue/50 transition-all duration-300 cursor-pointer ${zenMode ? 'border-none bg-transparent' : ''}`}
-                  >
-                    {!zenMode && article.urlToImage && (
-                      <div className="relative h-48 overflow-hidden">
-                        <img 
-                          src={article.urlToImage} 
-                          alt={article.title}
-                          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                          onError={(e) => (e.currentTarget.parentElement!.style.display = 'none')}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
-                        <div className="absolute top-3 left-3">
-                          <span className="px-2 py-1 bg-cyber-blue/80 backdrop-blur-sm rounded text-xs text-white font-medium">
-                            {typeof article.source === 'object' ? article.source?.name : article.source}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    <div className={`p-5 ${zenMode ? 'text-center py-8' : ''}`}>
-                      <h3 className={`font-bold text-white mb-2 group-hover:text-cyber-blue transition-colors line-clamp-2 ${speedReadMode ? 'text-xl md:text-2xl' : 'text-lg'} ${tldrMode ? 'font-semibold' : ''}`}>
-                        {article.title}
-                      </h3>
-                      {!tldrMode && (
-                        <p className={`text-gray-400 mb-4 line-clamp-2 leading-relaxed ${speedReadMode ? 'text-base' : 'text-sm'}`}>
-                          {article.description}
-                        </p>
-                      )}
-                      <div className={`flex items-center justify-between text-xs text-gray-500 ${zenMode ? 'hidden' : ''}`}>
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-3 h-3" />
-                          {new Date(article.publishedAt).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-cyber-blue">
-                            {Math.ceil((article.content?.length || 0) / 1000) || 2} min read
-                          </span>
-                        </div>
-                      </div>
-                      <div className={`flex items-center gap-2 mt-4 pt-4 border-t border-white/5 ${zenMode ? 'hidden' : ''}`}>
-                        <button
-                          onClick={(e) => toggleBookmark(article, e)}
-                          className={`p-2 rounded-lg transition-all ${isBookmarked(article) ? 'bg-cyber-blue/20 text-cyber-blue' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                        >
-                          <Bookmark className={`w-4 h-4 ${isBookmarked(article) ? 'fill-current' : ''}`} />
-                        </button>
-                        <button
-                          onClick={(e) => handleShare(article, e)}
-                          className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-all"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                        <a
-                          href={article.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-all ml-auto"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
+                  {article.urlToImage && (
+                    <div className="relative h-48 overflow-hidden">
+                      <img 
+                        src={article.urlToImage} 
+                        alt={article.title}
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+                      <div className="absolute top-3 left-3">
+                        <span className="px-2 py-1 bg-cyber-blue/80 backdrop-blur-sm rounded text-xs text-white font-medium">
+                          {typeof article.source === 'object' ? article.source?.name : article.source}
+                        </span>
                       </div>
                     </div>
-                  </motion.article>
-                ))}
-                
-                {/* Infinite scroll loader */}
-                {displayedCount < articles.length && (
-                  <div ref={loaderRef} className="flex justify-center py-8">
-                    <RefreshCw className="w-8 h-8 text-cyber-blue animate-spin" />
+                  )}
+                  <div className="p-4">
+                    <h3 className="font-bold text-white mb-2 group-hover:text-cyber-blue transition-colors line-clamp-2">
+                      {article.title}
+                    </h3>
+                    {!tldrMode && (
+                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                        {article.description}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                      </div>
+                      <span className="text-cyber-blue">
+                        {Math.ceil((article.content?.length || 0) / 1000) || 2} min
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/5">
+                      <button
+                        onClick={(e) => toggleBookmark(article, e)}
+                        className={`p-1.5 rounded-lg transition-all ${isBookmarked(article) ? 'bg-cyber-blue/20 text-cyber-blue' : 'text-gray-400 hover:text-white'}`}
+                        title="Bookmark"
+                      >
+                        <Bookmark className={`w-4 h-4 ${isBookmarked(article) ? 'fill-current' : ''}`} />
+                      </button>
+                      <button
+                        onClick={(e) => handleShare(article, e)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                        title="Share"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                      <a
+                        href={article.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-white transition-all ml-auto"
+                        title="Open original"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
                   </div>
-                )}
-              </>
-            )}
-          </div>
-          
-          <div className="hidden lg:block space-y-6">
-            <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search news..."
-                  className="w-full pl-10 pr-4 py-2 bg-white/5 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyber-blue/50"
-                />
-              </div>
-            </div>
-            
-            <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-cyber-blue" />
-                Stats
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Articles</span>
-                  <span className="text-white font-medium">{articles.length}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Bookmarks</span>
-                  <span className="text-white font-medium">{bookmarkedArticles.length}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Category</span>
-                  <span className="text-cyber-blue font-medium capitalize">{selectedCategory}</span>
-                </div>
-                {lastRefresh && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Updated</span>
-                    <span className="text-gray-500">
-                      {new Date(lastRefresh).toLocaleTimeString()}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Theme Selector */}
-            <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Sun className="w-5 h-5 text-cyber-blue" />
-                Theme
-              </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {['cyber', 'dark', 'light'].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => changeTheme(t as any)}
-                    className={`px-3 py-2 rounded-lg text-sm capitalize transition-all ${
-                      theme === t
-                        ? 'bg-cyber-blue text-white'
-                        : 'bg-white/5 text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+                </motion.article>
+              ))}
+            </>
+          )}
         </div>
+
+        {/* Load More */}
+        {displayedCount < articles.length && !zenMode && (
+          <div ref={loaderRef} className="flex justify-center py-8">
+            <button
+              onClick={() => setDisplayedCount(prev => prev + 10)}
+              className="px-6 py-2 bg-cyber-blue/10 text-cyber-blue rounded-lg hover:bg-cyber-blue/20 transition-all"
+            >
+              Load More
+            </button>
+          </div>
+        )}
       </main>
 
       {/* Bookmarks Panel */}

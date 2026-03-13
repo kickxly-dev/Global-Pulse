@@ -26,6 +26,7 @@ import NewsTimeline from '@/components/NewsTimeline'
 import VoiceSearch from '@/components/VoiceSearch'
 import NewsQuiz from '@/components/NewsQuiz'
 import SharePanel from '@/components/SharePanel'
+import LiveVideoSection from '@/components/LiveVideoSection'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -661,6 +662,7 @@ export default function HomePageClient() {
             {/* Sidebar */}
             <div className="space-y-6">
               <TrendingSidebar />
+              <LiveVideoSection />
               <NewsPodcast />
               <NewsQuiz />
             </div>

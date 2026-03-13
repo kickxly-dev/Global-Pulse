@@ -105,13 +105,21 @@ export default function CollaborativeCuration({ onCreateList }: CollaborativeCur
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className={`p-3 rounded-lg border transition-all cursor-pointer ${
+            className={`p-3 rounded-lg border transition-all cursor-pointer group relative ${
               selectedList === list.id
                 ? 'bg-amber-500/20 border-amber-500/30'
                 : 'bg-white/5 border-white/5 hover:border-white/10'
             }`}
             onClick={() => setSelectedList(selectedList === list.id ? null : list.id)}
           >
+            {/* Hover Preview */}
+            <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-black/90 rounded-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              <div className="text-xs text-amber-400 mb-2">Top articles:</div>
+              {['Climate summit reaches breakthrough agreement', 'New renewable energy record set', 'Expert analysis on policy changes'].map((title, j) => (
+                <div key={j} className="text-xs text-white/60 mb-1">• {title}</div>
+              ))}
+            </div>
+
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{list.curator.avatar}</span>
@@ -122,6 +130,11 @@ export default function CollaborativeCuration({ onCreateList }: CollaborativeCur
                       <span className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded">
                         <TrendingUp className="w-3 h-3" />
                         Hot
+                      </span>
+                    )}
+                    {!list.trending && list.id === '4' && (
+                      <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-xs rounded">
+                        New
                       </span>
                     )}
                   </div>
@@ -147,6 +160,10 @@ export default function CollaborativeCuration({ onCreateList }: CollaborativeCur
                 <span className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
                   {list.followers.toLocaleString()} followers
+                </span>
+                <span className="flex items-center gap-1 text-green-400">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  {Math.floor(Math.random() * 20 + 5)} reading now
                 </span>
               </div>
               

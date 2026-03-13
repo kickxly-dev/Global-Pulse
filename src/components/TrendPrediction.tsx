@@ -165,9 +165,13 @@ export default function TrendPrediction() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className={`text-sm font-bold ${getTrendColor(pred.change)}`}>
+                  <motion.div 
+                    className={`text-sm font-bold ${getTrendColor(pred.change)}`}
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
                     {pred.change > 0 ? '+' : ''}{pred.change}%
-                  </div>
+                  </motion.div>
                   <div className="text-xs text-white/40">predicted</div>
                 </div>
               </div>
@@ -194,13 +198,13 @@ export default function TrendPrediction() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/40">Confidence:</span>
                   <div className="flex items-center gap-1">
-                    <div className={`w-2 h-2 rounded-full ${getConfidenceColor(pred.confidence)}`} />
-                    <span className="text-xs">{pred.confidence}%</span>
+                    <div className={`w-2 h-2 rounded-full ${getConfidenceColor(pred.confidence)} animate-pulse`} />
+                    <span className="text-xs font-medium">{pred.confidence}%</span>
                   </div>
                 </div>
                 <div className="flex gap-1">
                   {pred.relatedTopics.slice(0, 2).map((topic, j) => (
-                    <span key={j} className="px-1.5 py-0.5 bg-white/5 text-xs text-white/40 rounded">
+                    <span key={j} className="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 text-xs rounded border border-cyan-500/30">
                       {topic}
                     </span>
                   ))}

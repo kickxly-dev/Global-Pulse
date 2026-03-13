@@ -534,19 +534,28 @@ export default function HomePageClient() {
         <AnimatePresence>
           {showNewArticlesBadge && (
             <motion.div
-              initial={{ y: -50, opacity: 0 }}
+              initial={{ y: -100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -50, opacity: 0 }}
-              className="fixed top-24 left-1/2 -translate-x-1/2 z-40"
+              exit={{ y: -100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed top-20 left-1/2 -translate-x-1/2 z-50"
             >
-              <button
-                onClick={() => { setShowNewArticlesBadge(false); setNewArticlesCount(0); refresh(); }}
-                className="flex items-center gap-3 px-6 py-3 bg-emerald-500 text-white rounded-full shadow-lg shadow-emerald-500/30 font-medium hover:bg-emerald-600 transition-all"
-              >
+              <div className="flex items-center gap-3 px-6 py-3 bg-emerald-500 text-white rounded-full shadow-lg shadow-emerald-500/30 font-medium hover:bg-emerald-600 transition-all">
                 <Bell className="w-5 h-5 animate-bounce" />
                 {newArticlesCount} new {newArticlesCount === 1 ? 'article' : 'articles'} available
-                <ArrowRight className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={() => { setShowNewArticlesBadge(false); setNewArticlesCount(0); refresh(); }}
+                  className="flex items-center gap-2 hover:bg-emerald-700 px-3 py-1 rounded-full transition-colors"
+                >
+                  Read Now <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => { setShowNewArticlesBadge(false); setNewArticlesCount(0); }}
+                  className="ml-2 p-1 hover:bg-emerald-700 rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -577,10 +586,10 @@ export default function HomePageClient() {
                 className="absolute inset-0"
               >
                 <img src={featuredArticle.urlToImage} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent backdrop-blur-[1px]" />
               </motion.div>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/30 via-black to-purple-900/30" />
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/40 via-black to-purple-900/40" />
             )}
             
             {/* Breaking News Banner */}
@@ -620,13 +629,13 @@ export default function HomePageClient() {
                 {/* Headline */}
                 <h1 
                   onClick={() => openArticle(featuredArticle)} 
-                  className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 cursor-pointer hover:opacity-90 transition-opacity"
+                  className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 cursor-pointer hover:opacity-90 transition-opacity text-white drop-shadow-lg"
                 >
                   {featuredArticle.title}
                 </h1>
                 
                 {/* Description */}
-                <p className="text-lg md:text-xl text-white/70 mb-6 leading-relaxed max-w-3xl">
+                <p className="text-lg md:text-xl text-white/80 mb-6 leading-relaxed max-w-3xl drop-shadow-md">
                   {featuredArticle.description}
                 </p>
                 
@@ -649,7 +658,7 @@ export default function HomePageClient() {
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={() => openArticle(featuredArticle)} 
-                    className="group flex items-center gap-2 px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-white/90 transition-all"
+                    className="group flex items-center gap-2 px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-white/90 transition-all shadow-lg shadow-white/20 hover:shadow-white/40 hover:scale-105"
                   >
                     Read Full Story <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>

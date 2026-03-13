@@ -138,12 +138,18 @@ export default function NewsComparison({ topic = 'Climate Policy' }: NewsCompari
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => toggleSource(source)}
-              className={`p-3 rounded-lg border transition-all ${
+              className={`p-3 rounded-lg border transition-all group relative ${
                 isSelected
                   ? 'bg-indigo-500/20 border-indigo-500/30'
                   : 'bg-white/5 border-white/5 hover:border-white/10'
               }`}
             >
+              {/* Hover Preview */}
+              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-black/90 rounded-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                <p className="text-xs text-white/80 mb-1">{source.article.title}</p>
+                <p className="text-xs text-white/60 line-clamp-2">{source.article.summary}</p>
+              </div>
+              
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-sm">{source.name}</span>
                 {isSelected && <CheckCircle className="w-4 h-4 text-indigo-400" />}
@@ -159,6 +165,32 @@ export default function NewsComparison({ topic = 'Climate Policy' }: NewsCompari
             </motion.button>
           )
         })}
+      </div>
+
+      {/* Bias Spectrum */}
+      <div className="mb-4 p-3 bg-white/5 rounded-lg">
+        <div className="text-xs text-white/40 mb-2">Political Bias Spectrum</div>
+        <div className="relative h-6 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 rounded-full">
+          {sources.map((source, i) => {
+            const position = source.bias === 'left' ? 20 : source.bias === 'right' ? 80 : 50
+            const isSelected = selectedSources.find(s => s.id === source.id)
+            return (
+              <div
+                key={source.id}
+                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-black cursor-pointer hover:scale-125 transition-transform"
+                style={{ left: `${position}%` }}
+                title={`${source.name}: ${source.bias}`}
+              >
+                {isSelected && <div className="absolute inset-0 bg-indigo-400 rounded-full animate-ping" />}
+              </div>
+            )
+          })}
+        </div>
+        <div className="flex justify-between text-xs text-white/40 mt-1">
+          <span>Left</span>
+          <span>Center</span>
+          <span>Right</span>
+        </div>
       </div>
 
       {/* Compare Button */}

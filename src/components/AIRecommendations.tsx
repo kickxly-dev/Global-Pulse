@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Brain, TrendingUp, Users, Zap, Target, Sparkles, ChevronRight } from 'lucide-react'
+import { Brain, TrendingUp, Users, Zap, Target, Sparkles, ChevronRight, RefreshCw } from 'lucide-react'
 
 interface Recommendation {
   id: string
@@ -95,7 +95,8 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
           <h3 className="font-semibold">AI Recommendations</h3>
           <Sparkles className="w-3 h-3 text-purple-400 animate-pulse" />
         </div>
-        <button className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+        <button className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-colors">
+          <RefreshCw className="w-3 h-3" />
           Refresh
         </button>
       </div>
@@ -138,12 +139,67 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
         </div>
       ) : (
         <div className="space-y-3">
-          {recommendations.map((rec, i) => (
+          {/* Featured Top Recommendation */}
+          {recommendations[0] && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0, duration: 0.4 }}
+              onClick={() => onArticleClick(recommendations[0])}
+              className="p-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-lg border border-purple-500/30 hover:border-purple-500/50 cursor-pointer transition-all group relative overflow-hidden"
+            >
+              <div className="absolute top-2 right-2">
+                <span className="px-2 py-1 bg-purple-500 text-white text-xs font-bold rounded-full">Featured</span>
+              </div>
+              <div className="flex items-start gap-3">
+                {recommendations[0].image && (
+                  <img 
+                    src={recommendations[0].image} 
+                    alt="" 
+                    className="w-20 h-16 object-cover rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-purple-400 font-medium">{recommendations[0].category}</span>
+                    <div className="flex items-center gap-1">
+                      <div className="relative w-12 h-12">
+                        <svg className="w-12 h-12 transform -rotate-90">
+                          <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="none" className="text-white/10" />
+                          <circle 
+                            cx="24" cy="24" r="20" 
+                            stroke="currentColor" 
+                            strokeWidth="4" 
+                            fill="none" 
+                            strokeDasharray={`${recommendations[0].score * 1.26} 126`}
+                            className="text-green-400 transition-all duration-1000"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-green-400">
+                          {recommendations[0].score}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <h4 className="text-base font-bold line-clamp-2 mb-2 group-hover:text-purple-300 transition-colors">
+                    {recommendations[0].title}
+                  </h4>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-white/50 font-medium">{recommendations[0].source}</span>
+                    <span className="text-xs text-white/40 italic">{recommendations[0].reason}</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Other Recommendations */}
+          {recommendations.slice(1).map((rec, i) => (
             <motion.div
               key={rec.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: (i + 1) * 0.1 }}
               onClick={() => onArticleClick(rec)}
               className="p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/10 cursor-pointer transition-all group"
             >
@@ -152,15 +208,29 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
                   <img 
                     src={rec.image} 
                     alt="" 
-                    className="w-16 h-12 object-cover rounded-lg flex-shrink-0"
+                    className="w-16 h-12 object-cover rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform"
                   />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-purple-400">{rec.category}</span>
                     <div className="flex items-center gap-1">
-                      <Target className="w-3 h-3 text-green-400" />
-                      <span className="text-xs text-green-400">{rec.score}% match</span>
+                      <div className="w-8 h-8 relative">
+                        <svg className="w-8 h-8 transform -rotate-90">
+                          <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="3" fill="none" className="text-white/10" />
+                          <circle 
+                            cx="16" cy="16" r="14" 
+                            stroke="currentColor" 
+                            strokeWidth="3" 
+                            fill="none" 
+                            strokeDasharray={`${rec.score * 0.88} 88`}
+                            className="text-green-400 transition-all duration-1000"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-green-400">
+                          {rec.score}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <h4 className="text-sm font-medium line-clamp-2 mb-1 group-hover:text-purple-400 transition-colors">

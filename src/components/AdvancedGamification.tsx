@@ -160,7 +160,7 @@ export default function AdvancedGamification() {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-xs font-medium text-black flex items-center justify-center gap-1">
+            <button className="w-full mt-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-xs font-medium text-black flex items-center justify-center gap-1 animate-pulse hover:animate-none hover:scale-105 transition-all">
               <Gift className="w-3 h-3" />
               Claim Today's Bonus (+{dailyBonus[dailyLoginDay]} XP)
             </button>
@@ -186,7 +186,10 @@ export default function AdvancedGamification() {
                       <span className="text-xs text-purple-400">{topic.level}</span>
                     </div>
                     <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-purple-500" style={{ width: `${topic.progress}%` }} />
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${topic.progress}%` }}
+                      />
                     </div>
                   </div>
                 </div>

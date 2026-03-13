@@ -185,6 +185,9 @@ export default function HomePageClient() {
 
   return (
     <div className={`min-h-screen bg-cyber-darker ${theme === 'light' ? 'theme-light' : theme === 'dark' ? 'theme-dark' : 'theme-cyber'}`}>
+      {/* Live Data Stream Indicator */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink animate-pulse" />
+      
       {/* Breaking News Alert */}
       <AnimatePresence>
         {showBreakingAlert && breakingNews.length > 0 && (

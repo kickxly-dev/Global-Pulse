@@ -32,6 +32,9 @@ import SentimentDashboard from '@/components/SentimentDashboard'
 import NewsComparison from '@/components/NewsComparison'
 import FactCheckIntegration from '@/components/FactCheckIntegration'
 import NewsTranslation from '@/components/NewsTranslation'
+import CollaborativeCuration from '@/components/CollaborativeCuration'
+import AudioSummary from '@/components/AudioSummary'
+import TrendPrediction from '@/components/TrendPrediction'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -727,8 +730,11 @@ export default function HomePageClient() {
                   setShowArticle(true)
                 }}
               />
+              <TrendPrediction />
               <SentimentDashboard />
               <NewsComparison />
+              <CollaborativeCuration />
+              <AudioSummary article={selectedArticle} />
               <FactCheckIntegration article={selectedArticle} />
               <NewsTranslation article={selectedArticle} />
             </div>

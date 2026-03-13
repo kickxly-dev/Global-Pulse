@@ -106,7 +106,7 @@ export default function HomePageClient() {
                   <h3 className="text-lg font-semibold text-white mb-2">{article.title}</h3>
                   <p className="text-gray-400 text-sm mb-3">{article.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">{article.source}</span>
+                    <span className="text-xs text-gray-500">{typeof article.source === 'object' ? article.source?.name : article.source}</span>
                     <span className="text-xs text-gray-500">
                       {new Date(article.publishedAt).toLocaleDateString()}
                     </span>

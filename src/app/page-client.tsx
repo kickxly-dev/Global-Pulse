@@ -385,6 +385,29 @@ export default function HomePageClient() {
                 )}
               </div>
             </div>
+            
+            {/* Theme Selector */}
+            <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Sun className="w-5 h-5 text-cyber-blue" />
+                Theme
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {['cyber', 'dark', 'light'].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => changeTheme(t as any)}
+                    className={`px-3 py-2 rounded-lg text-sm capitalize transition-all ${
+                      theme === t
+                        ? 'bg-cyber-blue text-white'
+                        : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </main>

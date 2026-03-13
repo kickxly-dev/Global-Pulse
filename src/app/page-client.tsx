@@ -74,79 +74,75 @@ export default function HomePageClient() {
     previousArticleCount.current = articles.length
   }, [articles])
 
+  // Infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading && displayedCount < articles.length) {
+          setDisplayedCount((prev) => Math.min(prev + 10, articles.length))
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [loading, displayedCount, articles.length])
+
+  // Reset displayed count when category or search changes
+  useEffect(() => {
+    setDisplayedCount(10)
+  }, [selectedCategory, searchQuery])
+
+  // Calculate global mood
+  const globalMood = useMemo(() => {
+    if (articles.length === 0) return null
+    const sentimentScores = articles.map(a => {
+      const title = (a.title || '').toLowerCase()
+      let score = 0
+      const positive = ['breakthrough', 'success', 'win', 'growth', 'positive', 'advances', 'rises', 'gains', 'soars', 'surges']
+      const negative = ['crisis', 'crash', 'fail', 'loss', 'death', 'war', 'decline', 'drops', 'falls', 'plunges']
+      positive.forEach(word => { if (title.includes(word)) score += 1 })
+      negative.forEach(word => { if (title.includes(word)) score -= 1 })
+      return score
+    })
+    const avgScore = sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length
+    return {
+      dominant: avgScore > 0.1 ? 'positive' : avgScore < -0.1 ? 'negative' : 'neutral',
+      score: avgScore
+    }
+  }, [articles])
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // '/' to focus search
       if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault()
         searchInputRef.current?.focus()
       }
-      // 'r' to refresh
       if (e.key === 'r' && !e.metaKey && !e.ctrlKey) {
         refresh()
       }
-      // Infinite scroll
-      useEffect(() => {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            if (entries[0].isIntersecting && !loading && displayedCount < articles.length) {
-              setDisplayedCount((prev) => Math.min(prev + 10, articles.length))
-            }
-          },
-          { threshold: 0.1 }
-        )
-
-        if (loaderRef.current) {
-          observer.observe(loaderRef.current)
-        }
-
-        return () => observer.disconnect()
-      }, [loading, displayedCount, articles.length])
-
-      // Reset displayed count when category or search changes
-      useEffect(() => {
-        setDisplayedCount(10)
-      }, [selectedCategory, searchQuery])
-      // Calculate global mood
-      const globalMood = useMemo(() => {
-        if (articles.length === 0) return null
-        const sentimentScores = articles.map(a => {
-          const title = (a.title || '').toLowerCase()
-          let score = 0
-          const positive = ['breakthrough', 'success', 'win', 'growth', 'positive', 'advances', 'rises', 'gains', 'soars', 'surges']
-          const negative = ['crisis', 'crash', 'fail', 'loss', 'death', 'war', 'decline', 'drops', 'falls', 'plunges']
-          positive.forEach(word => { if (title.includes(word)) score += 1 })
-          negative.forEach(word => { if (title.includes(word)) score -= 1 })
-          return score
-        })
-        const avgScore = sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length
-        return {
-          dominant: avgScore > 0.1 ? 'positive' : avgScore < -0.1 ? 'negative' : 'neutral',
-          score: avgScore
-        }
-      }, [articles])
-      // 'b' to toggle bookmarks
       if (e.key === 'b' && !e.metaKey && !e.ctrlKey) {
         setShowBookmarks(prev => !prev)
       }
-      // 't' to cycle theme
       if (e.key === 't' && !e.metaKey && !e.ctrlKey) {
         cycleTheme()
       }
-      // 'Escape' to close modals
       if (e.key === 'Escape') {
         setShowArticle(false)
         setShowShare(false)
         setShowBookmarks(false)
         setShowDailyDigest(false)
-        setShowBreakingAlert(false)
       }
     }
-
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [refresh])
+
   const isBookmarked = (article: any) => {
     return bookmarkedArticles.some(a => a.url === article.url)
   }

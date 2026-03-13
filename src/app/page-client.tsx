@@ -44,6 +44,7 @@ import SmartSummarization from '@/components/SmartSummarization'
 import LiveUpdateTracking from '@/components/LiveUpdateTracking'
 import BiasDetection from '@/components/BiasDetection'
 import PredictiveQueue from '@/components/PredictiveQueue'
+import InteractiveData from '@/components/InteractiveData'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -744,6 +745,7 @@ export default function HomePageClient() {
               <SmartSummarization article={selectedArticle} />
               <LiveUpdateTracking article={selectedArticle} />
               <BiasDetection article={selectedArticle} />
+              <InteractiveData article={selectedArticle} />
               <Gamification />
               <TrendPrediction />
               <SentimentDashboard />

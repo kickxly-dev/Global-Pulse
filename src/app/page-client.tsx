@@ -721,7 +721,7 @@ export default function HomePageClient() {
         {/* Main Content with Sidebar */}
         <section className="max-w-7xl mx-auto px-6 py-4">
           {/* Categories Carousel */}
-          <div className="mb-3">
+          <div className="mb-4">
             <CategoriesCarousel 
               selectedCategory={selectedCategory} 
               onCategoryChange={setSelectedCategory} 
@@ -738,6 +738,7 @@ export default function HomePageClient() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
+                    className="bg-white/[0.02] rounded-xl p-4 border border-white/5"
                   >
                     <NewsTimeline />
                   </motion.div>
@@ -745,8 +746,8 @@ export default function HomePageClient() {
               </AnimatePresence>
 
               {/* Articles Grid */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-xl font-bold">Latest Stories</h2>
                     <p className="text-xs text-white/40 mt-1">{articles.length} articles • Updated {lastRefresh ? new Date(lastRefresh).toLocaleTimeString() : '—'}</p>

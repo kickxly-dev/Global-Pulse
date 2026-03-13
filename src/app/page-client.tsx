@@ -37,6 +37,7 @@ import AudioSummary from '@/components/AudioSummary'
 import TrendPrediction from '@/components/TrendPrediction'
 import Gamification from '@/components/Gamification'
 import DeveloperAPI from '@/components/DeveloperAPI'
+import BookmarkCollections from '@/components/BookmarkCollections'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -738,6 +739,7 @@ export default function HomePageClient() {
               <NewsComparison />
               <CollaborativeCuration />
               <DeveloperAPI />
+              <BookmarkCollections />
               <AudioSummary article={selectedArticle} />
               <FactCheckIntegration article={selectedArticle} />
               <NewsTranslation article={selectedArticle} />

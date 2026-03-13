@@ -45,6 +45,7 @@ import LiveUpdateTracking from '@/components/LiveUpdateTracking'
 import BiasDetection from '@/components/BiasDetection'
 import PredictiveQueue from '@/components/PredictiveQueue'
 import InteractiveData from '@/components/InteractiveData'
+import SocialReading from '@/components/SocialReading'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -746,6 +747,7 @@ export default function HomePageClient() {
               <LiveUpdateTracking article={selectedArticle} />
               <BiasDetection article={selectedArticle} />
               <InteractiveData article={selectedArticle} />
+              <SocialReading article={selectedArticle} />
               <Gamification />
               <TrendPrediction />
               <SentimentDashboard />

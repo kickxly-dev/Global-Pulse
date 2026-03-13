@@ -25,6 +25,9 @@ import NewsQuiz from '@/components/NewsQuiz'
 import SharePanel from '@/components/SharePanel'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import CategoriesCarousel from '@/components/CategoriesCarousel'
+import AIRecommendations from '@/components/AIRecommendations'
+import SocialFeed from '@/components/SocialFeed'
+import BreakingNewsAlerts from '@/components/BreakingNewsAlerts'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -63,6 +66,8 @@ export default function HomePageClient() {
   const [shareArticleData, setShareArticleData] = useState<any>(null)
   const [showTimeline, setShowTimeline] = useState(false)
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
+  const [showSocialFeed, setShowSocialFeed] = useState(false)
+  const [socialFeedArticle, setSocialFeedArticle] = useState<any>(null)
   const loaderRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
   const { scrollYProgress } = useScroll()
@@ -710,6 +715,14 @@ export default function HomePageClient() {
             
             {/* Sidebar */}
             <div className="space-y-6">
+              <AIRecommendations 
+                userInterests={['technology', 'world', 'business']}
+                readingHistory={bookmarkedArticles.map(a => a.title)}
+                onArticleClick={(article) => {
+                  setSelectedArticle(article)
+                  setShowArticle(true)
+                }}
+              />
               <TrendingSidebar />
               <NewsQuiz />
             </div>
@@ -1020,6 +1033,44 @@ export default function HomePageClient() {
         isOpen={showKeyboardShortcuts} 
         onClose={() => setShowKeyboardShortcuts(false)} 
       />
+
+      {/* Breaking News Alerts */}
+      <BreakingNewsAlerts 
+        onAlertClick={(alert) => {
+          // Handle alert click
+        }}
+      />
+
+      {/* Social Feed Modal */}
+      <AnimatePresence>
+        {showSocialFeed && socialFeedArticle && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setShowSocialFeed(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl max-h-[80vh] bg-black border border-white/10 rounded-2xl overflow-hidden"
+            >
+              <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <h3 className="font-semibold">Community Discussion</h3>
+                <button onClick={() => setShowSocialFeed(false)}>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 overflow-y-auto max-h-[60vh]">
+                <SocialFeed article={socialFeedArticle} />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

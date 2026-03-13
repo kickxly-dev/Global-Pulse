@@ -278,7 +278,25 @@ export default function HomePageClient() {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink bg-clip-text text-transparent">
                   Global Pulse
                 </h1>
-                <p className="text-xs text-gray-500">Real-time Global Intelligence</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-gray-500">Real-time Global Intelligence</p>
+                  {globalMood && (
+                    <span className="flex items-center gap-1 text-xs">
+                      <span className={`w-2 h-2 rounded-full ${
+                        globalMood.dominant === 'positive' ? 'bg-green-500' :
+                        globalMood.dominant === 'negative' ? 'bg-red-500' :
+                        'bg-yellow-500'
+                      }`} />
+                      <span className={`${
+                        globalMood.dominant === 'positive' ? 'text-green-400' :
+                        globalMood.dominant === 'negative' ? 'text-red-400' :
+                        'text-yellow-400'
+                      }`}>
+                        {globalMood.dominant === 'positive' ? '↑' : globalMood.dominant === 'negative' ? '↓' : '→'}
+                      </span>
+                    </span>
+                  )}
+                </div>
               </div>
             </motion.div>
             

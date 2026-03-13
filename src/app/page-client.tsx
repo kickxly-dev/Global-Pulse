@@ -267,20 +267,6 @@ export default function HomePageClient() {
     previousArticleCount.current = articles.length
   }, [articles])
 
-  // Register service worker
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered:', registration)
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error)
-        })
-    }
-  }, [])
-
   return (
     <div className={`min-h-screen bg-cyber-darker ${theme === 'light' ? 'theme-light' : theme === 'dark' ? 'theme-dark' : 'theme-cyber'}`}>
       <NotificationManager />

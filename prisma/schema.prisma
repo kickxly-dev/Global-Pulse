@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// Cached news articles
+model Article {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  url           String   @unique
+  urlToImage    String?
+  source        String?
+  author        String?
+  publishedAt   DateTime
+  content       String?
+  category      String   @default("general")
+  
+  // Engagement
+  viewCount     Int      @default(0)
+  likeCount     Int      @default(0)
+  saveCount     Int      @default(0)
+  
+  // Breaking news flag
+  isBreaking    Boolean  @default(false)
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  bookmarks     Bookmark[]
+  engagements   Engagement[]
+  
+  @@index([category])
+  @@index([publishedAt])
+  @@index([isBreaking])
+}
+
+// User bookmarks
+model Bookmark {
+  id          String   @id @default(cuid())
+  articleUrl  String
+  userId      String?  // For future auth
+  
+  createdAt   DateTime @default(now())
+  
+  article     Article  @relation(fields: [articleUrl], references: [url], onDelete: Cascade)
+  
+  @@unique([articleUrl, userId])
+}
+
+// User engagement tracking
+model Engagement {
+  id          String   @id @default(cuid())
+  articleUrl  String
+  userId      String?
+  action      String   // "view", "like", "share"
+  
+  createdAt   DateTime @default(now())
+  
+  article     Article  @relation(fields: [articleUrl], references: [url], onDelete: Cascade)
+  
+  @@index([articleUrl])
+  @@index([userId])
+}
+
+// User preferences
+model UserPreference {
+  id              String   @id @default(cuid())
+  userId          String?  @unique
+  
+  // Settings
+  soundEnabled    Boolean  @default(true)
+  notificationsEnabled Boolean @default(true)
+  darkMode        Boolean  @default(true)
+  
+  // Quiet hours
+  quietHoursEnabled Boolean @default(false)
+  quietHoursStart String  @default("22:00")
+  quietHoursEnd   String  @default("08:00")
+  
+  // Favorite categories
+  categories      String[] @default(["general"])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt()
+}

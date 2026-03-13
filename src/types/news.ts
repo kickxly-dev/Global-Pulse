@@ -14,6 +14,11 @@ export interface NewsArticle {
   category?: string
   country?: string
   language?: string
+  // Database fields
+  isBreaking?: boolean
+  viewCount?: number
+  likeCount?: number
+  saveCount?: number
   coordinates?: {
     lat: number
     lng: number

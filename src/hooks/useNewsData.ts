@@ -37,7 +37,7 @@ export function useNewsData({
   country = 'us',
   query = '',
   autoRefresh = true,
-  refreshInterval = 30000, // 30 seconds - faster for testing
+  refreshInterval = 15000, // 15 seconds for real-time
 }: UseNewsDataParams) {
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
@@ -50,7 +50,7 @@ export function useNewsData({
   const previousArticlesRef = useRef<Set<string>>(new Set())
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const fetchNews = useCallback(async (showToast = false, isAuto = false) => {
+  const fetchNews = useCallback(async (showToast = false, isAuto = false, forceRefresh = false) => {
     try {
       setError(null)
       
@@ -58,13 +58,15 @@ export function useNewsData({
         setIsAutoRefreshing(true)
       }
       
+      // Use database API for caching
       const params = new URLSearchParams({
         category,
         country,
         ...(query && { query }),
+        ...(forceRefresh && { refresh: 'true' })
       })
 
-      const response = await fetch(`/api/news?${params}`)
+      const response = await fetch(`/api/articles?${params}`)
       
       if (!response.ok) {
         throw new Error('Failed to fetch news')
@@ -79,19 +81,18 @@ export function useNewsData({
       const fetchedArticles = data.articles || []
       
       // Check for new articles
-      const newArticleIds = new Set<string>(fetchedArticles.map((a: NewsArticle) => a.id))
+      const newArticleIds = new Set<string>(fetchedArticles.map((a: NewsArticle) => a.url))
       const newArticles = fetchedArticles.filter(
-        (article: NewsArticle) => !previousArticlesRef.current.has(article.id)
+        (article: NewsArticle) => !previousArticlesRef.current.has(article.url)
       )
       const hasNewArticles = newArticles.length > 0
 
       // Detect breaking news
-      const breaking = newArticles.filter(isBreakingNews)
+      const breaking = newArticles.filter((a: NewsArticle) => a.isBreaking || isBreakingNews(a))
       if (breaking.length > 0) {
         setBreakingNews(breaking)
         breaking.forEach(sendBreakingNewsNotification)
         
-        // Show breaking news toast
         toast.error(`🔴 ${breaking.length} BREAKING NEWS ALERT${breaking.length > 1 ? 'S' : ''}`, {
           duration: 5000,
           action: {
@@ -99,9 +100,6 @@ export function useNewsData({
             onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
           },
         })
-        
-        // Play breaking news sound
-        playNotificationSound('breaking')
       }
 
       if (hasNewArticles && previousArticlesRef.current.size > 0 && showToast) {
@@ -114,12 +112,6 @@ export function useNewsData({
             onClick: () => window.location.reload(),
           },
         })
-
-        // Play notification sound if enabled
-        const settings = JSON.parse(localStorage.getItem('userPreferences') || '{}')
-        if (settings.soundEnabled && breaking.length === 0) {
-          playNotificationSound('breaking')
-        }
       }
 
       previousArticlesRef.current = newArticleIds
@@ -145,7 +137,7 @@ export function useNewsData({
 
     if (autoRefresh) {
       intervalRef.current = setInterval(() => {
-        fetchNews(true, true) // Mark as auto-refresh
+        fetchNews(true, true, true) // Force refresh from API
       }, refreshInterval)
     }
 
@@ -158,8 +150,21 @@ export function useNewsData({
 
   const refresh = useCallback(() => {
     setLoading(true)
-    fetchNews(true)
+    fetchNews(true, false, true)
   }, [fetchNews])
+
+  // Track engagement
+  const trackEngagement = useCallback(async (articleUrl: string, action: 'view' | 'like' | 'share') => {
+    try {
+      await fetch('/api/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articleUrl, action })
+      })
+    } catch (err) {
+      console.error('Failed to track engagement:', err)
+    }
+  }, [])
 
   return {
     articles,
@@ -172,6 +177,7 @@ export function useNewsData({
     isBreakingNews,
     isAutoRefreshing,
     lastRefresh,
+    trackEngagement,
   }
 }
 
@@ -179,13 +185,12 @@ function playNotificationSound(type: 'breaking' | 'local' | 'personal') {
   try {
     const settings = JSON.parse(localStorage.getItem('userPreferences') || '{}')
     
-    // Check quiet hours
     if (settings.quietHoursEnabled) {
       const now = new Date()
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
       
       if (currentTime >= settings.quietHoursStart && currentTime <= settings.quietHoursEnd) {
-        return // Don't play sound during quiet hours
+        return
       }
     }
 

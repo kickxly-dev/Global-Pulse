@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Globe, Search, Bookmark, RefreshCw, AlertCircle, Share2, 
-  X, Newspaper, Moon, Sun, Zap, ExternalLink, TrendingUp, Activity, Brain, Trophy, Film,
-  Clock, Sparkles, Wind, Maximize2, Minimize2, BookOpen
+  Globe, Bookmark, RefreshCw, Share2, 
+  X, Newspaper, Moon, Sun, Zap, ExternalLink, TrendingUp, 
+  Clock, BookOpen, Heart, Flame, ArrowRight, Menu, Sparkles
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNewsData } from '@/hooks/useNewsData'
@@ -13,7 +13,16 @@ import { useTheme } from '@/hooks/useTheme'
 import ModernArticleView from '@/components/ModernArticleView'
 import ShareModal from '@/components/ShareModal'
 import DailyDigest from '@/components/DailyDigest'
-import AutoRefreshIndicator from '@/components/AutoRefreshIndicator'
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 }
+}
+
+const stagger = {
+  animate: { transition: { staggerChildren: 0.05 } }
+}
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -25,17 +34,12 @@ export default function HomePageClient() {
   const [shareArticle, setShareArticle] = useState<any>(null)
   const [showShare, setShowShare] = useState(false)
   const [showDailyDigest, setShowDailyDigest] = useState(false)
-  const [breakingNews, setBreakingNews] = useState<any[]>([])
-  const [showBreakingAlert, setShowBreakingAlert] = useState(false)
   const [tldrMode, setTldrMode] = useState(false)
   const [speedReadMode, setSpeedReadMode] = useState(false)
   const [zenMode, setZenMode] = useState(false)
-  const [displayedCount, setDisplayedCount] = useState(10)
-  const [searchHistory, setSearchHistory] = useState<string[]>([])
-  const [showSearchHistory, setShowSearchHistory] = useState(false)
+  const [displayedCount, setDisplayedCount] = useState(12)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const loaderRef = useRef<HTMLDivElement>(null)
-  const previousArticleCount = useRef(0)
-  const searchInputRef = useRef<HTMLInputElement>(null)
   
   const { articles, loading, error, refresh, lastRefresh } = useNewsData({
     category: selectedCategory,
@@ -46,509 +50,507 @@ export default function HomePageClient() {
   
   const { theme, changeTheme } = useTheme()
 
-  // Load bookmarks from localStorage
+  // Load bookmarks
   useEffect(() => {
     try {
       const saved = localStorage.getItem('bookmarkedArticles')
-      if (saved) {
-        setBookmarkedArticles(JSON.parse(saved))
-      }
-      const history = localStorage.getItem('searchHistory')
-      if (history) {
-        setSearchHistory(JSON.parse(history))
-      }
+      if (saved) setBookmarkedArticles(JSON.parse(saved))
     } catch (err) {
-      console.error('Failed to load from localStorage:', err)
+      console.error('Failed to load bookmarks:', err)
     }
   }, [])
-
-  // Detect breaking news and new articles
-  useEffect(() => {
-    if (articles.length > previousArticleCount.current && previousArticleCount.current > 0) {
-      const newArticles = articles.slice(0, articles.length - previousArticleCount.current)
-      const breaking = newArticles.filter(article => {
-        const publishedTime = new Date(article.publishedAt).getTime()
-        const now = Date.now()
-        return (now - publishedTime) < (60 * 60 * 1000) // Less than 1 hour old
-      })
-      
-      if (breaking.length > 0) {
-        setBreakingNews(breaking)
-        setShowBreakingAlert(true)
-        toast.success(`${breaking.length} breaking news article${breaking.length > 1 ? 's' : ''}!`, {
-          icon: '🚨'
-        })
-        setTimeout(() => setShowBreakingAlert(false), 10000)
-      }
-    }
-    previousArticleCount.current = articles.length
-  }, [articles])
 
   // Infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && displayedCount < articles.length) {
-          setDisplayedCount((prev) => Math.min(prev + 10, articles.length))
+          setDisplayedCount((prev) => Math.min(prev + 12, articles.length))
         }
       },
       { threshold: 0.1 }
     )
-
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current)
-    }
-
+    if (loaderRef.current) observer.observe(loaderRef.current)
     return () => observer.disconnect()
   }, [loading, displayedCount, articles.length])
-
-  // Reset displayed count when category or search changes
-  useEffect(() => {
-    setDisplayedCount(10)
-  }, [selectedCategory, searchQuery])
-
-  // Calculate global mood
-  const globalMood = useMemo(() => {
-    if (articles.length === 0) return null
-    const sentimentScores = articles.map(a => {
-      const title = (a.title || '').toLowerCase()
-      let score = 0
-      const positive = ['breakthrough', 'success', 'win', 'growth', 'positive', 'advances', 'rises', 'gains', 'soars', 'surges']
-      const negative = ['crisis', 'crash', 'fail', 'loss', 'death', 'war', 'decline', 'drops', 'falls', 'plunges']
-      positive.forEach(word => { if (title.includes(word)) score += 1 })
-      negative.forEach(word => { if (title.includes(word)) score -= 1 })
-      return score
-    })
-    const avgScore = sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length
-    return {
-      dominant: avgScore > 0.1 ? 'positive' : avgScore < -0.1 ? 'negative' : 'neutral',
-      score: avgScore
-    }
-  }, [articles])
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault()
-        searchInputRef.current?.focus()
-      }
-      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) {
-        refresh()
-      }
-      if (e.key === 'b' && !e.metaKey && !e.ctrlKey) {
-        setShowBookmarks(prev => !prev)
-      }
-      if (e.key === 't' && !e.metaKey && !e.ctrlKey) {
-        cycleTheme()
-      }
       if (e.key === 'Escape') {
         setShowArticle(false)
         setShowShare(false)
         setShowBookmarks(false)
         setShowDailyDigest(false)
+        setMobileMenuOpen(false)
+      }
+      if (e.key === 'b' && !e.metaKey && !e.ctrlKey && !showArticle) {
+        setShowBookmarks(prev => !prev)
+      }
+      if (e.key === 't' && !e.metaKey && !e.ctrlKey && !showArticle) {
+        cycleTheme()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [refresh])
+  }, [showArticle])
 
-  const isBookmarked = (article: any) => {
-    return bookmarkedArticles.some(a => a.url === article.url)
-  }
-
-  // Toggle bookmark with proper state handling
-  const toggleBookmark = (article: any, e?: React.MouseEvent) => {
-    e?.stopPropagation()
-    e?.preventDefault()
-    
-    const bookmarked = isBookmarked(article)
-    let newBookmarks: any[]
-    
-    if (bookmarked) {
-      newBookmarks = bookmarkedArticles.filter(a => a.url !== article.url)
-      toast.success('Removed from bookmarks')
-    } else {
-      newBookmarks = [...bookmarkedArticles, article]
-      toast.success('Added to bookmarks')
-    }
-    
-    setBookmarkedArticles(newBookmarks)
-    
-    // Save to localStorage immediately
-    try {
-      localStorage.setItem('bookmarkedArticles', JSON.stringify(newBookmarks))
-    } catch (err) {
-      console.error('Failed to save bookmarks:', err)
-    }
-  }
-
-  // Open article
-  const openArticle = (article: any) => {
-    setSelectedArticle(article)
-    setShowArticle(true)
-  }
-
-  // Share article
-  const handleShare = (article: any, e?: React.MouseEvent) => {
-    e?.stopPropagation()
-    setShareArticle(article)
-    setShowShare(true)
-  }
-
-  // Cycle theme
-  const cycleTheme = () => {
-    const themes = ['cyber', 'dark', 'light'] as const
-    const currentIndex = themes.indexOf(theme as any)
-    const nextTheme = themes[(currentIndex + 1) % themes.length]
-    changeTheme(nextTheme)
-    toast.success(`Theme: ${nextTheme.toUpperCase()}`)
-  }
-
-  // Filter articles based on reading mode
+  // Filter articles
   const filteredArticles = useMemo(() => {
     let filtered = [...articles]
-    
-    // Zen mode: only show first 3 articles
-    if (zenMode) {
-      filtered = filtered.slice(0, 3)
-    }
-    
-    // TLDR mode: filter to show only articles with short descriptions (priority to concise content)
+    if (zenMode) filtered = filtered.slice(0, 3)
     if (tldrMode) {
-      filtered = filtered.filter(a => (a.description?.length || 0) < 200)
+      filtered = filtered
+        .filter(a => (a.description?.length || 0) < 200)
         .sort((a, b) => (a.description?.length || 0) - (b.description?.length || 0))
     }
-    
-    // Speed Read mode: prioritize recent articles and limit count
     if (speedReadMode) {
       filtered = filtered
         .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-        .slice(0, Math.min(10, filtered.length))
+        .slice(0, 10)
     }
-    
     return filtered.slice(0, displayedCount)
   }, [articles, displayedCount, zenMode, tldrMode, speedReadMode])
 
+  // Global mood
+  const globalMood = useMemo(() => {
+    if (articles.length === 0) return null
+    const positive = ['surge', 'rise', 'growth', 'success', 'win', 'breakthrough', 'gain', 'boost']
+    const negative = ['crisis', 'fall', 'war', 'death', 'crash', 'loss', 'threat', 'decline']
+    let score = 0
+    articles.slice(0, 20).forEach(a => {
+      const text = (a.title + ' ' + (a.description || '')).toLowerCase()
+      positive.forEach(w => { if (text.includes(w)) score++ })
+      negative.forEach(w => { if (text.includes(w)) score-- })
+    })
+    return score > 3 ? 'positive' : score < -3 ? 'negative' : 'neutral'
+  }, [articles])
+
   const categories = [
+    { id: 'general', name: 'For You', icon: Sparkles },
     { id: 'technology', name: 'Tech', icon: Zap },
     { id: 'business', name: 'Business', icon: TrendingUp },
-    { id: 'health', name: 'Health', icon: Activity },
-    { id: 'science', name: 'Science', icon: Brain },
-    { id: 'sports', name: 'Sports', icon: Trophy },
-    { id: 'entertainment', name: 'Entertainment', icon: Film },
+    { id: 'science', name: 'Science', icon: Globe },
+    { id: 'health', name: 'Health', icon: Heart },
+    { id: 'sports', name: 'Sports', icon: Flame },
+    { id: 'entertainment', name: 'Culture', icon: Newspaper },
   ]
 
+  const cycleTheme = useCallback(() => {
+    const themes = ['cyber', 'dark', 'light'] as const
+    const idx = themes.indexOf(theme as any)
+    const next = themes[(idx + 1) % themes.length]
+    changeTheme(next)
+    toast.success(`${next.charAt(0).toUpperCase() + next.slice(1)} mode`)
+  }, [theme, changeTheme])
+
+  const isBookmarked = useCallback((article: any) => 
+    bookmarkedArticles.some(a => a.url === article.url), [bookmarkedArticles])
+
+  const toggleBookmark = useCallback((article: any, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    e?.preventDefault()
+    const newBookmarks = isBookmarked(article)
+      ? bookmarkedArticles.filter(a => a.url !== article.url)
+      : [...bookmarkedArticles, article]
+    setBookmarkedArticles(newBookmarks)
+    localStorage.setItem('bookmarkedArticles', JSON.stringify(newBookmarks))
+    toast.success(isBookmarked(article) ? 'Removed from saved' : 'Saved article')
+  }, [bookmarkedArticles, isBookmarked])
+
+  const openArticle = useCallback((article: any) => {
+    setSelectedArticle(article)
+    setShowArticle(true)
+  }, [])
+
+  const handleShare = useCallback((article: any, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setShareArticle(article)
+    setShowShare(true)
+  }, [])
+
+  const featuredArticle = articles[0]
+  const trendingArticles = articles.slice(1, 4)
+
   return (
-    <div className={`min-h-screen bg-cyber-darker ${theme === 'light' ? 'theme-light' : theme === 'dark' ? 'theme-dark' : 'theme-cyber'}`}>
-      {/* Live Data Stream Indicator */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink animate-pulse" />
-      
-      {/* Breaking News Alert */}
-      <AnimatePresence>
-        {showBreakingAlert && breakingNews.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-20 left-4 right-4 z-50 bg-red-500/90 backdrop-blur-sm rounded-lg p-4 border border-red-400/50 shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <AlertCircle className="w-6 h-6 text-white" />
-                <div>
-                  <h3 className="text-white font-bold">Breaking News</h3>
-                  <p className="text-red-100 text-sm">{breakingNews.length} new article{breakingNews.length > 1 ? 's' : ''} detected</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowBreakingAlert(false)}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-xl border-b border-white/10 shadow-lg">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-x-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-cyber-blue/10 via-transparent to-transparent rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-cyber-purple/10 via-transparent to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-cyber-pink/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      {/* Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-slate-900/70 border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center space-x-4"
+              className="flex items-center gap-3"
             >
-              <div className="relative group cursor-pointer">
-                <Globe className="w-10 h-10 text-cyber-blue group-hover:animate-spin-slow transition-all" />
-                <div className="absolute inset-0 bg-cyber-blue/20 rounded-full blur-xl group-hover:bg-cyber-blue/40 transition-all" />
+              <div className="relative">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                >
+                  <Globe className="w-9 h-9 text-cyber-blue" />
+                </motion.div>
+                <div className="absolute inset-0 bg-cyber-blue/30 rounded-full blur-lg" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink bg-clip-text text-transparent">
                   Global Pulse
                 </h1>
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-gray-500">Real-time Global Intelligence</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Live News</span>
                   {globalMood && (
-                    <span className="flex items-center gap-1 text-xs">
-                      <span className={`w-2 h-2 rounded-full ${
-                        globalMood.dominant === 'positive' ? 'bg-green-500' :
-                        globalMood.dominant === 'negative' ? 'bg-red-500' :
-                        'bg-yellow-500'
-                      }`} />
-                      <span className={`${
-                        globalMood.dominant === 'positive' ? 'text-green-400' :
-                        globalMood.dominant === 'negative' ? 'text-red-400' :
-                        'text-yellow-400'
-                      }`}>
-                        {globalMood.dominant === 'positive' ? '↑' : globalMood.dominant === 'negative' ? '↓' : '→'}
-                      </span>
-                    </span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      globalMood === 'positive' ? 'bg-emerald-400' :
+                      globalMood === 'negative' ? 'bg-rose-400' : 'bg-amber-400'
+                    }`} />
                   )}
                 </div>
               </div>
             </motion.div>
-            
-            <div className="flex items-center space-x-2">
-              <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm rounded-xl p-1.5 border border-white/10">
-                  <button
-                    onClick={() => setTldrMode(!tldrMode)}
-                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
-                      tldrMode 
-                        ? 'bg-cyber-blue text-white shadow-lg shadow-cyber-blue/30' 
-                        : 'text-gray-300 hover:text-white hover:bg-white/10'
-                    }`}
-                    title="TLDR Mode - Show only short articles"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    TLDR
-                  </button>
-                  <button
-                    onClick={() => setSpeedReadMode(!speedReadMode)}
-                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
-                      speedReadMode 
-                        ? 'bg-cyber-purple text-white shadow-lg shadow-cyber-purple/30' 
-                        : 'text-gray-300 hover:text-white hover:bg-white/10'
-                    }`}
-                    title="Speed Read - Show 10 most recent articles"
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    Speed
-                  </button>
-                  <button
-                    onClick={() => setZenMode(!zenMode)}
-                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
-                      zenMode 
-                        ? 'bg-cyber-green text-white shadow-lg shadow-cyber-green/30' 
-                        : 'text-gray-300 hover:text-white hover:bg-white/10'
-                    }`}
-                    title="Zen Mode - Minimal distraction, 3 articles only"
-                  >
-                    <BookOpen className="w-3.5 h-3.5" />
-                    Zen
-                  </button>
-                </div>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-1">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selectedCategory === cat.id
+                      ? 'bg-white text-slate-900'
+                      : 'text-slate-400 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </nav>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              {/* Reading Modes - Desktop */}
+              <div className="hidden md:flex items-center gap-1 p-1 bg-white/5 rounded-full">
+                <button
+                  onClick={() => { setTldrMode(!tldrMode); setSpeedReadMode(false); setZenMode(false); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    tldrMode ? 'bg-cyber-blue text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  TLDR
+                </button>
+                <button
+                  onClick={() => { setSpeedReadMode(!speedReadMode); setTldrMode(false); setZenMode(false); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    speedReadMode ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Speed
+                </button>
+                <button
+                  onClick={() => { setZenMode(!zenMode); setTldrMode(false); setSpeedReadMode(false); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    zenMode ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Zen
+                </button>
+              </div>
 
               <button
                 onClick={() => setShowBookmarks(true)}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all relative"
+                className="relative p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
               >
-                <Bookmark className="w-5 h-5 text-gray-300" />
+                <Bookmark className="w-5 h-5" />
                 {bookmarkedArticles.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-cyber-blue rounded-full text-xs flex items-center justify-center text-white font-bold">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-cyber-blue rounded-full text-[10px] font-bold flex items-center justify-center">
                     {bookmarkedArticles.length}
                   </span>
                 )}
               </button>
-              
+
               <button
                 onClick={() => setShowDailyDigest(true)}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+                className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
               >
-                <Newspaper className="w-5 h-5 text-gray-300" />
+                <Newspaper className="w-5 h-5" />
               </button>
-              
+
               <button
                 onClick={cycleTheme}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+                className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
               >
-                {theme === 'light' ? <Sun className="w-5 h-5 text-yellow-400" /> : 
-                 theme === 'dark' ? <Moon className="w-5 h-5 text-gray-300" /> : 
+                {theme === 'light' ? <Sun className="w-5 h-5 text-amber-400" /> : 
+                 theme === 'dark' ? <Moon className="w-5 h-5" /> : 
                  <Zap className="w-5 h-5 text-cyber-blue" />}
               </button>
-              
+
               <button
                 onClick={refresh}
                 disabled={loading}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all disabled:opacity-50"
+                className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-all disabled:opacity-50"
               >
-                <RefreshCw className={`w-5 h-5 text-gray-300 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
               </button>
-              </div>
+
+              {/* Mobile Menu */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
             </div>
           </div>
-          
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            {categories.map((category) => {
-              const Icon = category.icon
-              return (
+
+          {/* Mobile Categories */}
+          <div className="lg:hidden pb-3 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-2">
+              {categories.map((cat) => (
                 <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-                    selectedCategory === category.id
-                      ? 'bg-cyber-blue text-white shadow-lg shadow-cyber-blue/25'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    selectedCategory === cat.id
+                      ? 'bg-white text-slate-900'
+                      : 'bg-white/5 text-slate-400 hover:text-white'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{category.name}</span>
+                  {cat.name}
                 </button>
-              )
-            })}
+              ))}
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Reading Mode Status */}
-        {(tldrMode || speedReadMode || zenMode) && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-xl bg-cyber-blue/10 border border-cyber-blue/20 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              {tldrMode && <Zap className="w-5 h-5 text-cyber-blue" />}
-              {speedReadMode && <Clock className="w-5 h-5 text-cyber-purple" />}
-              {zenMode && <BookOpen className="w-5 h-5 text-cyber-green" />}
-              <span className="text-sm">
-                {tldrMode && 'TLDR Mode: Showing short articles only'}
-                {speedReadMode && 'Speed Read: Showing 10 most recent articles'}
-                {zenMode && 'Zen Mode: Showing 3 articles for focused reading'}
-              </span>
-            </div>
-            <button
-              onClick={() => { setTldrMode(false); setSpeedReadMode(false); setZenMode(false); }}
-              className="text-xs text-cyber-blue hover:underline"
+      {/* Main Content */}
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Reading Mode Banner */}
+        <AnimatePresence>
+          {(tldrMode || speedReadMode || zenMode) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-cyber-blue/10 via-cyber-purple/10 to-cyber-pink/10 border border-white/10 flex items-center justify-between"
             >
-              Disable
-            </button>
-          </motion.div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading && articles.length === 0 ? (
-            // Loading skeletons
-            [1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-gray-800/50 rounded-xl overflow-hidden animate-pulse">
-                <div className="h-48 bg-gray-700" />
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-700 rounded w-3/4" />
-                  <div className="h-3 bg-gray-700 rounded w-full" />
-                  <div className="h-3 bg-gray-700 rounded w-2/3" />
-                </div>
+              <div className="flex items-center gap-3">
+                {tldrMode && <Zap className="w-5 h-5 text-cyber-blue" />}
+                {speedReadMode && <Clock className="w-5 h-5 text-cyber-purple" />}
+                {zenMode && <BookOpen className="w-5 h-5 text-emerald-400" />}
+                <span className="text-sm font-medium">
+                  {tldrMode && 'TLDR Mode — Quick reads only'}
+                  {speedReadMode && 'Speed Read — 10 latest stories'}
+                  {zenMode && 'Zen Mode — Minimal & focused'}
+                </span>
               </div>
-            ))
-          ) : error ? (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-400 mb-4">{error}</p>
               <button
-                onClick={refresh}
-                className="px-6 py-2 bg-cyber-blue text-white rounded-lg hover:bg-cyber-blue/80 transition-all"
+                onClick={() => { setTldrMode(false); setSpeedReadMode(false); setZenMode(false); }}
+                className="text-xs text-slate-400 hover:text-white transition-colors"
               >
-                Try Again
+                Disable
               </button>
-            </div>
-          ) : (
-            <>
-              {filteredArticles.map((article, index) => (
-                <motion.article
-                  key={article.url + index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.3 }}
-                  onClick={() => openArticle(article)}
-                  className="group bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-cyber-blue/50 hover:shadow-lg hover:shadow-cyber-blue/10 transition-all duration-300 cursor-pointer"
-                >
-                  {article.urlToImage && (
-                    <div className="relative h-48 overflow-hidden">
-                      <img 
-                        src={article.urlToImage} 
-                        alt={article.title}
-                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
-                      <div className="absolute top-3 left-3">
-                        <span className="px-2 py-1 bg-cyber-blue/80 backdrop-blur-sm rounded text-xs text-white font-medium">
-                          {typeof article.source === 'object' ? article.source?.name : article.source}
-                        </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Hero Section - Featured Article */}
+        {!loading && featuredArticle && !zenMode && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12"
+          >
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Featured */}
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                onClick={() => openArticle(featuredArticle)}
+                className="relative group cursor-pointer rounded-3xl overflow-hidden bg-slate-800/50 border border-white/10 hover:border-cyber-blue/50 transition-all"
+              >
+                {featuredArticle.urlToImage && (
+                  <div className="aspect-[16/10] overflow-hidden">
+                    <img
+                      src={featuredArticle.urlToImage}
+                      alt={featuredArticle.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="px-3 py-1 bg-cyber-blue rounded-full text-xs font-semibold">
+                      Featured
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {featuredArticle.source?.name}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl lg:text-3xl font-bold mb-2 group-hover:text-cyber-blue transition-colors">
+                    {featuredArticle.title}
+                  </h2>
+                  <p className="text-slate-400 text-sm line-clamp-2">
+                    {featuredArticle.description}
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Trending */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-cyber-purple" />
+                  Trending Now
+                </h3>
+                {trendingArticles.map((article, idx) => (
+                  <motion.div
+                    key={article.url}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    onClick={() => openArticle(article)}
+                    className="group cursor-pointer p-4 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-white/20 hover:bg-slate-800/50 transition-all"
+                  >
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-cyber-blue to-cyber-purple flex items-center justify-center text-sm font-bold">
+                        {idx + 2}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium line-clamp-2 group-hover:text-cyber-blue transition-colors">
+                          {article.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                          <span>{article.source?.name}</span>
+                          <span>•</span>
+                          <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* Articles Grid */}
+        {loading && articles.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="rounded-2xl bg-slate-800/30 border border-white/5 overflow-hidden animate-pulse">
+                <div className="aspect-[16/10] bg-slate-700" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-slate-700 rounded w-3/4" />
+                  <div className="h-3 bg-slate-700 rounded w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-20">
+            <p className="text-slate-400 mb-4">{error}</p>
+            <button
+              onClick={refresh}
+              className="px-6 py-3 bg-cyber-blue text-white rounded-full font-medium hover:bg-cyber-blue/80 transition-all"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : (
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={stagger}
+            initial="initial"
+            animate="animate"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredArticles.slice(zenMode ? 0 : 1).map((article, index) => (
+                <motion.article
+                  key={article.url}
+                  variants={fadeInUp}
+                  layout
+                  whileHover={{ y: -5 }}
+                  onClick={() => openArticle(article)}
+                  className="group cursor-pointer rounded-2xl overflow-hidden bg-slate-800/30 backdrop-blur-sm border border-white/5 hover:border-white/20 hover:bg-slate-800/50 transition-all"
+                >
+                  {article.urlToImage && (
+                    <div className="aspect-[16/10] overflow-hidden relative">
+                      <img
+                        src={article.urlToImage}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
+                    </div>
                   )}
-                  <div className="p-4">
-                    <h3 className="font-bold text-white mb-2 group-hover:text-cyber-blue transition-colors line-clamp-2">
+                  <div className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-medium text-cyber-blue">
+                        {article.source?.name}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {new Date(article.publishedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-cyber-blue transition-colors">
                       {article.title}
                     </h3>
                     {!tldrMode && (
-                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                      <p className="text-sm text-slate-400 line-clamp-2 mb-4">
                         {article.description}
                       </p>
                     )}
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => toggleBookmark(article, e)}
+                          className={`p-2 rounded-lg transition-all ${
+                            isBookmarked(article) 
+                              ? 'text-cyber-blue bg-cyber-blue/10' 
+                              : 'text-slate-500 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          <Bookmark className="w-4 h-4" fill={isBookmarked(article) ? 'currentColor' : 'none'} />
+                        </button>
+                        <button
+                          onClick={(e) => handleShare(article, e)}
+                          className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <span className="text-cyber-blue">
+                      <span className="text-xs text-slate-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
                         {Math.ceil((article.content?.length || 0) / 1000) || 2} min
                       </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/5">
-                      <button
-                        onClick={(e) => toggleBookmark(article, e)}
-                        className={`p-1.5 rounded-lg transition-all ${isBookmarked(article) ? 'bg-cyber-blue/20 text-cyber-blue' : 'text-gray-400 hover:text-white'}`}
-                        title="Bookmark"
-                      >
-                        <Bookmark className={`w-4 h-4 ${isBookmarked(article) ? 'fill-current' : ''}`} />
-                      </button>
-                      <button
-                        onClick={(e) => handleShare(article, e)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
-                        title="Share"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </button>
-                      <a
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-white transition-all ml-auto"
-                        title="Open original"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
                     </div>
                   </div>
                 </motion.article>
               ))}
-            </>
-          )}
-        </div>
+            </AnimatePresence>
+          </motion.div>
+        )}
 
         {/* Load More */}
         {displayedCount < articles.length && !zenMode && (
-          <div ref={loaderRef} className="flex justify-center py-8">
-            <button
-              onClick={() => setDisplayedCount(prev => prev + 10)}
-              className="px-6 py-2 bg-cyber-blue/10 text-cyber-blue rounded-lg hover:bg-cyber-blue/20 transition-all"
+          <div ref={loaderRef} className="flex justify-center py-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setDisplayedCount(prev => prev + 12)}
+              className="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full font-medium transition-all flex items-center gap-2"
             >
               Load More
-            </button>
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
           </div>
         )}
       </main>
@@ -560,65 +562,58 @@ export default function HomePageClient() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm"
             onClick={() => setShowBookmarks(false)}
           >
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute right-0 top-0 h-full w-full max-w-md bg-gray-900 border-l border-white/10 p-6 overflow-y-auto"
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md h-full bg-slate-900 border-l border-white/10 overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Bookmarks</h2>
-                <button
-                  onClick={() => setShowBookmarks(false)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
+              <div className="sticky top-0 z-10 p-6 border-b border-white/10 bg-slate-900">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold">Saved Articles</h2>
+                  <button
+                    onClick={() => setShowBookmarks(false)}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              
-              {bookmarkedArticles.length === 0 ? (
-                <div className="text-center py-12">
-                  <Bookmark className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">No bookmarks yet</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {bookmarkedArticles.map((article, index) => (
-                    <motion.div
-                      key={article.url + index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-cyber-blue/50 transition-all cursor-pointer"
-                      onClick={() => {
-                        setShowBookmarks(false)
-                        openArticle(article)
-                      }}
-                    >
-                      <h4 className="text-white font-medium mb-2 line-clamp-2">{article.title}</h4>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          {typeof article.source === 'object' ? article.source?.name : article.source}
-                        </span>
+              <div className="p-6">
+                {bookmarkedArticles.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Bookmark className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                    <p className="text-slate-400">No saved articles yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {bookmarkedArticles.map((article, idx) => (
+                      <motion.div
+                        key={article.url}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        onClick={() => { setShowBookmarks(false); openArticle(article); }}
+                        className="p-4 rounded-xl bg-slate-800/50 border border-white/5 hover:border-white/20 cursor-pointer transition-all"
+                      >
+                        <h4 className="font-medium mb-1 line-clamp-2">{article.title}</h4>
+                        <p className="text-xs text-slate-500">{article.source?.name}</p>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleBookmark(article)
-                          }}
-                          className="p-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
+                          onClick={(e) => toggleBookmark(article, e)}
+                          className="mt-2 text-xs text-rose-400 hover:underline"
                         >
-                          <X className="w-4 h-4" />
+                          Remove
                         </button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -643,49 +638,35 @@ export default function HomePageClient() {
           onClose={() => setShowShare(false)}
         />
       )}
-      
+
       {/* Daily Digest */}
       <DailyDigest
         isOpen={showDailyDigest}
         onClose={() => setShowDailyDigest(false)}
       />
-      
-      {/* Auto Refresh Indicator */}
-      <AutoRefreshIndicator
-        isAutoRefreshing={loading}
-        lastRefresh={lastRefresh}
-      />
 
       {/* Footer */}
-      <footer className="py-8 border-t border-white/10 bg-gray-900/50">
-        <div className="container mx-auto px-4">
+      <footer className="border-t border-white/5 bg-slate-900/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Globe className="w-6 h-6 text-cyber-blue" />
-              <span className="text-sm text-gray-400">
+              <Globe className="w-5 h-5 text-cyber-blue" />
+              <span className="text-sm text-slate-400">
                 Global Pulse © {new Date().getFullYear()}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">B</kbd>
-                <span>Bookmarks</span>
+            <div className="flex items-center gap-6 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-slate-700 rounded text-slate-300">B</kbd>
+                Saved
               </span>
-              <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">T</kbd>
-                <span>Theme</span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-slate-700 rounded text-slate-300">T</kbd>
+                Theme
               </span>
-              <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">/</kbd>
-                <span>Search</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">R</kbd>
-                <span>Refresh</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">ESC</kbd>
-                <span>Close</span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-slate-700 rounded text-slate-300">ESC</kbd>
+                Close
               </span>
             </div>
           </div>

@@ -43,6 +43,7 @@ import StoryThreading from '@/components/StoryThreading'
 import SmartSummarization from '@/components/SmartSummarization'
 import LiveUpdateTracking from '@/components/LiveUpdateTracking'
 import BiasDetection from '@/components/BiasDetection'
+import PredictiveQueue from '@/components/PredictiveQueue'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -738,6 +739,7 @@ export default function HomePageClient() {
                   setShowArticle(true)
                 }}
               />
+              <PredictiveQueue />
               <StoryThreading article={selectedArticle} />
               <SmartSummarization article={selectedArticle} />
               <LiveUpdateTracking article={selectedArticle} />

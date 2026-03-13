@@ -1,6 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import {
+  getUserProfile,
+  getUserStats,
+  trackArticleInteraction,
+  type UserProfile
+} from '@/lib/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Brain, TrendingUp, Users, Zap, Target, Sparkles, ChevronRight, RefreshCw } from 'lucide-react'
 
@@ -11,6 +17,7 @@ interface Recommendation {
   reason: string
   score: number
   category: string
+  readTime?: number
   image?: string
 }
 
@@ -24,6 +31,27 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'personal' | 'trending' | 'viral'>('personal')
+
+  const handleArticleClick = async (article: Recommendation) => {
+    // Track the article interaction in the database
+    try {
+      const userId = 'current-user-id' // Get from auth context
+      await trackArticleInteraction(userId, {
+        article_url: article.id,
+        article_title: article.title,
+        article_source: article.source,
+        category: article.category,
+        read_time: article.readTime || 5,
+        bookmarked: false,
+        liked: false,
+        shared: false
+      })
+    } catch (error) {
+      console.error('Error tracking article interaction:', error)
+    }
+    
+    onArticleClick(article)
+  }
 
   useEffect(() => {
     // Simulate AI recommendations

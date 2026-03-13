@@ -16,6 +16,20 @@ import {
   Calendar,
   Clock
 } from 'lucide-react'
+import {
+  getUserProfile,
+  getUserAchievements,
+  getLeaderboard,
+  getDailyChallenges,
+  getUserChallenges,
+  updateStreak,
+  getUserStats,
+  type UserProfile,
+  type UserAchievement,
+  type LeaderboardEntry,
+  type DailyChallenge,
+  type UserChallenge
+} from '@/lib/database'
 
 interface StreakData {
   current: number
@@ -36,104 +50,108 @@ interface Achievement {
   points: number
 }
 
-interface LeaderboardEntry {
-  rank: number
-  username: string
-  avatar: string
-  points: number
-  streak: number
-  change: 'up' | 'down' | 'same'
-}
-
 interface EnhancedGamificationProps {
   userId?: string
 }
 
+const achievementIcons: { [key: string]: React.ComponentType<{ className?: string }> } = {
+  'news-explorer': Star,
+  'trend-spotter': TrendingUp,
+  'knowledge-seeker': Flame,
+  'master-reader': Trophy,
+  'social-butterfly': Users,
+  'category-collector': Target,
+  'speed-reader': Clock,
+  'bookmark-enthusiast': Award
+}
+
+const getRarityColor = (rarity: string) => {
+  switch (rarity) {
+    case 'common': return 'from-gray-500 to-gray-600'
+    case 'rare': return 'from-blue-500 to-purple-500'
+    case 'epic': return 'from-purple-500 to-pink-500'
+    case 'legendary': return 'from-yellow-500 to-orange-500'
+    default: return 'from-gray-500 to-gray-600'
+  }
+}
+
+const getRarityBorder = (rarity: string) => {
+  switch (rarity) {
+    case 'common': return 'border-gray-500/30'
+    case 'rare': return 'border-blue-500/30'
+    case 'epic': return 'border-purple-500/30'
+    case 'legendary': return 'border-yellow-500/30'
+    default: return 'border-gray-500/30'
+  }
+}
+
 export default function EnhancedGamification({ userId = 'user1' }: EnhancedGamificationProps) {
   const [streak, setStreak] = useState<StreakData>({
-    current: 7,
-    longest: 23,
+    current: 0,
+    longest: 0,
     lastActive: 'Today',
-    protected: true
+    protected: false
   })
-
-  const [achievements, setAchievements] = useState<Achievement[]>([
-    {
-      id: '1',
-      title: 'News Explorer',
-      description: 'Read 100 articles',
-      icon: Star,
-      progress: 87,
-      maxProgress: 100,
-      unlocked: false,
-      rarity: 'common',
-      points: 50
-    },
-    {
-      id: '2',
-      title: 'Trend Spotter',
-      description: 'Read 50 trending articles',
-      icon: TrendingUp,
-      progress: 50,
-      maxProgress: 50,
-      unlocked: true,
-      rarity: 'rare',
-      points: 100
-    },
-    {
-      id: '3',
-      title: 'Knowledge Seeker',
-      description: 'Maintain a 7-day streak',
-      icon: Flame,
-      progress: 7,
-      maxProgress: 7,
-      unlocked: true,
-      rarity: 'epic',
-      points: 200
-    },
-    {
-      id: '4',
-      title: 'Master Reader',
-      description: 'Read 500 articles',
-      icon: Trophy,
-      progress: 234,
-      maxProgress: 500,
-      unlocked: false,
-      rarity: 'legendary',
-      points: 500
-    }
-  ])
-
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([
-    { rank: 1, username: 'Alex Chen', avatar: '👨‍💻', points: 2840, streak: 45, change: 'up' },
-    { rank: 2, username: 'Sarah Miller', avatar: '👩‍🔬', points: 2650, streak: 32, change: 'up' },
-    { rank: 3, username: 'You', avatar: '🌟', points: 2420, streak: 7, change: 'up' },
-    { rank: 4, username: 'Mike Johnson', avatar: '👨‍🚀', points: 2380, streak: 28, change: 'down' },
-    { rank: 5, username: 'Emma Wilson', avatar: '👩‍💼', points: 2290, streak: 15, change: 'same' }
-  ])
-
+  const [achievements, setAchievements] = useState<Achievement[]>([])
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([])
+  const [userChallenges, setUserChallenges] = useState<UserChallenge[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'streak' | 'achievements' | 'leaderboard'>('streak')
   const [showConfetti, setShowConfetti] = useState(false)
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'from-gray-500 to-gray-600'
-      case 'rare': return 'from-blue-500 to-purple-500'
-      case 'epic': return 'from-purple-500 to-pink-500'
-      case 'legendary': return 'from-yellow-500 to-orange-500'
-      default: return 'from-gray-500 to-gray-600'
-    }
-  }
+  useEffect(() => {
+    if (!userId) return
 
-  const getRarityBorder = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'border-gray-500/30'
-      case 'rare': return 'border-blue-500/30'
-      case 'epic': return 'border-purple-500/30'
-      case 'legendary': return 'border-yellow-500/30'
-      default: return 'border-gray-500/30'
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // Fetch user profile and update streak
+        const profile = await getUserProfile(userId)
+        if (profile) {
+          const streakData = await updateStreak(userId)
+          setStreak({
+            current: streakData.current,
+            longest: streakData.longest,
+            lastActive: new Date(profile.last_active).toLocaleDateString(),
+            protected: streakData.isProtected
+          })
+        }
+
+        // Fetch achievements
+        const userAchievements = await getUserAchievements(userId)
+        const achievementsData: Achievement[] = userAchievements.map(ua => ({
+          id: ua.achievement_id,
+          title: ua.achievement?.title || 'Unknown Achievement',
+          description: ua.achievement?.description || '',
+          icon: achievementIcons[ua.achievement?.icon || ''] || Star,
+          progress: ua.progress,
+          maxProgress: ua.max_progress,
+          unlocked: ua.unlocked,
+          rarity: ua.achievement?.rarity || 'common',
+          points: ua.achievement?.points || 0
+        }))
+        setAchievements(achievementsData)
+
+        // Fetch leaderboard
+        const leaderboardData = await getLeaderboard(5)
+        setLeaderboard(leaderboardData)
+
+        // Fetch daily challenges and user progress
+        const challengesData = await getDailyChallenges()
+        const userChallengesData = await getUserChallenges(userId)
+        setDailyChallenges(challengesData)
+        setUserChallenges(userChallengesData)
+
+      } catch (error) {
+        console.error('Error fetching gamification data:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
+    fetchData()
+  }, [userId])
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -144,13 +162,25 @@ export default function EnhancedGamification({ userId = 'user1' }: EnhancedGamif
     }
   }
 
-  const getChangeIcon = (change: string) => {
-    switch (change) {
-      case 'up': return <TrendingUp className="w-3 h-3 text-green-400" />
-      case 'down': return <TrendingUp className="w-3 h-3 text-red-400 rotate-180" />
-      case 'same': return <div className="w-3 h-3 bg-white/30 rounded-full" />
-      default: return null
-    }
+  const getChangeIcon = (change: number) => {
+    if (change > 0) return <TrendingUp className="w-3 h-3 text-green-400" />
+    if (change < 0) return <TrendingUp className="w-3 h-3 text-red-400 rotate-180" />
+    return <div className="w-3 h-3 bg-white/30 rounded-full" />
+  }
+
+  const getChallengeProgress = (challengeId: string) => {
+    const userChallenge = userChallenges.find(uc => uc.challenge_id === challengeId)
+    return userChallenge?.progress || 0
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-4">
+        <div className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -256,25 +286,31 @@ export default function EnhancedGamification({ userId = 'user1' }: EnhancedGamif
               </div>
             </div>
 
-            {/* Daily Challenge */}
-            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-medium">Daily Challenge</span>
-              </div>
-              <p className="text-xs text-white/60 mb-3">Read 5 articles from different categories</p>
-              <div className="flex items-center justify-between">
-                <div className="flex-1 bg-white/10 rounded-full h-2 mr-3">
-                  <motion.div
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: '60%' }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                  />
+            {/* Daily Challenges */}
+            {dailyChallenges.map((challenge, i) => {
+              const progress = getChallengeProgress(challenge.id)
+              return (
+                <div key={challenge.id} className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-cyan-400" />
+                    <span className="text-sm font-medium">{challenge.title}</span>
+                    <span className="text-xs text-cyan-400">+{challenge.points}</span>
+                  </div>
+                  <p className="text-xs text-white/60 mb-3">{challenge.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 bg-white/10 rounded-full h-2 mr-3">
+                      <motion.div
+                        className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 1, delay: i * 0.2 }}
+                      />
+                    </div>
+                    <span className="text-xs text-white/60">{Math.floor(progress)}/{challenge.target_value}</span>
+                  </div>
                 </div>
-                <span className="text-xs text-white/60">3/5</span>
-              </div>
-            </div>
+              )
+            })}
           </motion.div>
         )}
 
@@ -356,12 +392,12 @@ export default function EnhancedGamification({ userId = 'user1' }: EnhancedGamif
           >
             {leaderboard.map((entry, i) => (
               <motion.div
-                key={entry.rank}
+                key={entry.user_id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.1 }}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                  entry.username === 'You'
+                  entry.user_id === userId
                     ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30'
                     : 'bg-white/5 border border-white/10 hover:bg-white/10'
                 }`}
@@ -371,10 +407,10 @@ export default function EnhancedGamification({ userId = 'user1' }: EnhancedGamif
                   {getRankIcon(entry.rank)}
                 </div>
                 
-                <div className="text-lg">{entry.avatar}</div>
+                <div className="text-lg">{entry.avatar_url || '👤'}</div>
                 
                 <div className="flex-1">
-                  <p className="text-sm font-medium">{entry.username}</p>
+                  <p className="text-sm font-medium">{entry.name}</p>
                   <div className="flex items-center gap-3 text-xs text-white/60">
                     <span>{entry.points.toLocaleString()} pts</span>
                     <div className="flex items-center gap-1">
@@ -385,7 +421,7 @@ export default function EnhancedGamification({ userId = 'user1' }: EnhancedGamif
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {getChangeIcon(entry.change)}
+                  {getChangeIcon((entry.previous_rank || entry.rank) - entry.rank)}
                 </div>
               </motion.div>
             ))}

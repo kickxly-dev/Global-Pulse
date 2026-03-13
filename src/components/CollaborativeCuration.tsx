@@ -1,6 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import {
+  getUserProfile,
+  getUserStats,
+  trackArticleInteraction,
+  type UserProfile
+} from '@/lib/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Plus, ThumbsUp, ThumbsDown, CheckCircle, Clock, TrendingUp, Star } from 'lucide-react'
 

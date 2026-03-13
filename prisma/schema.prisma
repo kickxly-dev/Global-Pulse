@@ -49,11 +49,12 @@ model Article {
 model Bookmark {
   id          String   @id @default(cuid())
   articleUrl  String
-  userId      String?  // For future auth
+  userId      String?
   
   createdAt   DateTime @default(now())
   
   article     Article  @relation(fields: [articleUrl], references: [url], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([articleUrl, userId])
 }
@@ -68,6 +69,7 @@ model Engagement {
   createdAt   DateTime @default(now())
   
   article     Article  @relation(fields: [articleUrl], references: [url], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([articleUrl])
   @@index([userId])
@@ -90,7 +92,83 @@ model UserPreference {
   
   // Favorite categories
   categories      String[] @default(["general"])
+  preferredTopics String[] @default(["general", "technology"])
+  preferredCountries String[] @default(["us"])
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt()
+  
+  // Relations
+  user            User?    @relation(fields: [userId], references: [id])
+}
+
+// User accounts
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  password      String
+  avatar        String?
+  bio           String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  preferences   UserPreference?
+  bookmarks     Bookmark[]
+  engagements   Engagement[]
+  comments      Comment[]
+  commentLikes  CommentLike[]
+  followers     Follow[]   @relation("UserFollowers")
+  following     Follow[]   @relation("UserFollowing")
+}
+
+// Comments
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  userId      String
+  articleId   String
+  parentId    String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes       CommentLike[]
+  replies     Comment[] @relation("CommentReplies")
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  
+  @@index([articleId])
+  @@index([userId])
+}
+
+// Comment likes
+model CommentLike {
+  id          String   @id @default(cuid())
+  commentId   String
+  userId      String
+  
+  createdAt   DateTime @default(now())
+  
+  comment     Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([commentId, userId])
+}
+
+// User following
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  
+  createdAt   DateTime @default(now())
+  
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  @@unique([followerId, followingId])
 }

@@ -718,26 +718,19 @@ export default function HomePageClient() {
           </section>
         )}
 
-        {/* World Map */}
-        {!zenMode && (
-          <section className="max-w-7xl mx-auto px-6 py-4">
-            <WorldMap />
-          </section>
-        )}
-
         {/* Main Content with Sidebar */}
-        <section className="max-w-7xl mx-auto px-6 py-6">
+        <section className="max-w-7xl mx-auto px-6 py-4">
           {/* Categories Carousel */}
-          <div className="mb-4">
+          <div className="mb-3">
             <CategoriesCarousel 
               selectedCategory={selectedCategory} 
               onCategoryChange={setSelectedCategory} 
             />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Main Column */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4">
               {/* Timeline Toggle */}
               <AnimatePresence>
                 {showTimeline && (
@@ -753,7 +746,7 @@ export default function HomePageClient() {
 
               {/* Articles Grid */}
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <h2 className="text-xl font-bold">Latest Stories</h2>
                     <p className="text-xs text-white/40 mt-1">{articles.length} articles • Updated {lastRefresh ? new Date(lastRefresh).toLocaleTimeString() : '—'}</p>
@@ -766,11 +759,11 @@ export default function HomePageClient() {
                 </div>
 
                 {loading && articles.length === 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {[...Array(4)].map((_, i) => (
                       <div key={i} className="rounded-xl bg-white/5 border border-white/5 overflow-hidden">
                         <div className="aspect-[16/10] bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-shimmer bg-[length:200%_100%]" />
-                        <div className="p-4 space-y-2">
+                        <div className="p-3 space-y-2">
                           <div className="flex justify-between">
                             <div className="h-2 bg-white/5 rounded w-1/4 animate-pulse" />
                             <div className="h-2 bg-white/5 rounded w-1/6 animate-pulse" />
@@ -785,7 +778,7 @@ export default function HomePageClient() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {articles.map((article, idx) => (
                       <motion.article
                         key={article.url}
@@ -804,7 +797,7 @@ export default function HomePageClient() {
                             />
                           </div>
                         )}
-                        <div className="p-4">
+                        <div className="p-3">
                           <div className="flex items-center justify-between mb-2">
                             <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${getCategoryStyle(article.category || 'general')}`}>
                               {article.category || 'General'}
@@ -814,7 +807,7 @@ export default function HomePageClient() {
                           <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-white transition-colors">
                             {article.title}
                           </h3>
-                          <p className="text-xs text-white/60 mb-3 line-clamp-2">
+                          <p className="text-xs text-white/60 mb-2 line-clamp-2">
                             {article.description}
                           </p>
                           <div className="flex items-center justify-between">
@@ -830,7 +823,7 @@ export default function HomePageClient() {
             </div>
             
             {/* Sidebar */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <AIRecommendations 
                 userInterests={['technology', 'world', 'business']}
                 readingHistory={bookmarkedArticles.map(a => a.title)}
@@ -864,7 +857,7 @@ export default function HomePageClient() {
         <AnimatePresence>
           {(tldrMode || speedReadMode || zenMode) && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="border-b border-white/5 bg-white/[0.02]">
-              <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+              <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {tldrMode && <Zap className="w-4 h-4 text-cyan-400" />}
                   {speedReadMode && <Clock className="w-4 h-4 text-purple-400" />}

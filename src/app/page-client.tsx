@@ -62,7 +62,6 @@ import { useThemeSchedule } from '@/hooks/useThemeSchedule'
 import { Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, Activity, X, Mail } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useNotifications } from '@/hooks/useNotifications'
-import { useCustomNews } from '@/hooks/useCustomNews'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useTheme } from '@/hooks/useTheme'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -117,11 +116,12 @@ export default function HomePageClient() {
   const previousArticleCount = useRef(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
-  const { articles, loading, error, refresh, lastUpdated } = useCustomNews(
-    selectedCategory,
-    searchQuery,
-    60000 // 1 minute refresh
-  )
+  const { articles, loading, error, refresh, totalResults, breakingNews, newArticlesCount, isBreakingNews, isAutoRefreshing, lastRefresh } = useNewsData({
+    category: selectedCategory,
+    query: searchQuery,
+    country: country,
+    refreshInterval: 60000
+  })
   
   // Infinite scroll
   const { displayedItems, hasMore, loaderRef } = useInfiniteScroll({ items: articles, pageSize: 10 })
@@ -868,7 +868,7 @@ export default function HomePageClient() {
       {/* Auto Refresh Indicator */}
       <AutoRefreshIndicator
         isAutoRefreshing={loading}
-        lastRefresh={lastUpdated}
+        lastRefresh={lastRefresh}
       />
     </div>
   )

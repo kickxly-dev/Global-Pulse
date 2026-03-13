@@ -1,5 +1,5 @@
-// Mock database functions for client-side components
-// These will be replaced with API calls to the server-side database
+// Real database functions using API routes
+// These connect to the server-side database via Next.js API routes
 
 export interface UserProfile {
   id: string
@@ -84,244 +84,144 @@ export interface UserChallenge {
   challenge?: DailyChallenge
 }
 
-// Mock data for development
-const mockUserProfile: UserProfile = {
-  id: 'user1',
-  email: 'user@example.com',
-  name: 'Demo User',
-  avatar_url: '👤',
-  points: 2420,
-  streak: 7,
-  longest_streak: 23,
-  last_active: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
+// Helper function to make API calls
+async function apiCall(action: string, method: 'GET' | 'POST' = 'GET', userId?: string, data?: any) {
+  const url = new URL('/api/database', window.location.origin)
+  url.searchParams.set('action', action)
+  if (userId) url.searchParams.set('userId', userId)
+
+  try {
+    const response = await fetch(url.toString(), {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      ...(method === 'POST' && { body: JSON.stringify({ action, userId, data }) })
+    })
+
+    if (!response.ok) {
+      throw new Error(`API call failed: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('API call error:', error)
+    throw error
+  }
 }
 
-const mockAchievements: Achievement[] = [
-  {
-    id: '1',
-    title: 'News Explorer',
-    description: 'Read 100 articles',
-    icon: 'news-explorer',
-    rarity: 'common',
-    points: 50,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: 'Trend Spotter',
-    description: 'Read 50 trending articles',
-    icon: 'trend-spotter',
-    rarity: 'rare',
-    points: 100,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: '3',
-    title: 'Knowledge Seeker',
-    description: 'Maintain a 7-day streak',
-    icon: 'knowledge-seeker',
-    rarity: 'epic',
-    points: 200,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: '4',
-    title: 'Master Reader',
-    description: 'Read 500 articles',
-    icon: 'master-reader',
-    rarity: 'legendary',
-    points: 500,
-    created_at: new Date().toISOString()
-  }
-]
-
-const mockUserAchievements: UserAchievement[] = [
-  {
-    id: 'ua1',
-    user_id: 'user1',
-    achievement_id: '1',
-    progress: 87,
-    max_progress: 100,
-    unlocked: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    achievement: mockAchievements[0]
-  },
-  {
-    id: 'ua2',
-    user_id: 'user1',
-    achievement_id: '2',
-    progress: 50,
-    max_progress: 50,
-    unlocked: true,
-    unlocked_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    achievement: mockAchievements[1]
-  },
-  {
-    id: 'ua3',
-    user_id: 'user1',
-    achievement_id: '3',
-    progress: 7,
-    max_progress: 7,
-    unlocked: true,
-    unlocked_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    achievement: mockAchievements[2]
-  },
-  {
-    id: 'ua4',
-    user_id: 'user1',
-    achievement_id: '4',
-    progress: 234,
-    max_progress: 500,
-    unlocked: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    achievement: mockAchievements[3]
-  }
-]
-
-const mockLeaderboard: LeaderboardEntry[] = [
-  { user_id: 'user1', name: 'Alex Chen', avatar_url: '👨‍💻', points: 2840, streak: 45, rank: 1 },
-  { user_id: 'user2', name: 'Sarah Miller', avatar_url: '👩‍🔬', points: 2650, streak: 32, rank: 2 },
-  { user_id: 'user3', name: 'You', avatar_url: '🌟', points: 2420, streak: 7, rank: 3 },
-  { user_id: 'user4', name: 'Mike Johnson', avatar_url: '👨‍🚀', points: 2380, streak: 28, rank: 4 },
-  { user_id: 'user5', name: 'Emma Wilson', avatar_url: '👩‍💼', points: 2290, streak: 15, rank: 5 }
-]
-
-const mockDailyChallenges: DailyChallenge[] = [
-  {
-    id: 'dc1',
-    title: 'Daily Reader',
-    description: 'Read 5 articles',
-    type: 'articles',
-    target_value: 5,
-    points: 50,
-    active: true,
-    created_at: new Date().toISOString(),
-    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'dc2',
-    title: 'Category Explorer',
-    description: 'Read from 3 different categories',
-    type: 'categories',
-    target_value: 3,
-    points: 75,
-    active: true,
-    created_at: new Date().toISOString(),
-    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'dc3',
-    title: 'Time Investment',
-    description: 'Read for 30 minutes',
-    type: 'time',
-    target_value: 30,
-    points: 100,
-    active: true,
-    created_at: new Date().toISOString(),
-    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'dc4',
-    title: 'Social Sharer',
-    description: 'Share 2 articles',
-    type: 'sharing',
-    target_value: 2,
-    points: 60,
-    active: true,
-    created_at: new Date().toISOString(),
-    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-  }
-]
-
-const mockUserChallenges: UserChallenge[] = [
-  {
-    id: 'uc1',
-    user_id: 'user1',
-    challenge_id: 'dc1',
-    progress: 60,
-    completed: false,
-    created_at: new Date().toISOString(),
-    challenge: mockDailyChallenges[0]
-  },
-  {
-    id: 'uc2',
-    user_id: 'user1',
-    challenge_id: 'dc2',
-    progress: 33,
-    completed: false,
-    created_at: new Date().toISOString(),
-    challenge: mockDailyChallenges[1]
-  }
-]
-
-// Database functions (mock implementations)
+// Database functions using real API
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 100))
-  return mockUserProfile
+  try {
+    return await apiCall('profile', 'GET', userId)
+  } catch (error) {
+    console.error('Error fetching user profile:', error)
+    return null
+  }
 }
 
 export async function updateUserProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | null> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  return { ...mockUserProfile, ...updates }
+  try {
+    return await apiCall('update-profile', 'POST', userId, updates)
+  } catch (error) {
+    console.error('Error updating user profile:', error)
+    return null
+  }
 }
 
 export async function getUserAchievements(userId: string): Promise<UserAchievement[]> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  return mockUserAchievements
+  try {
+    const achievements = await apiCall('achievements', 'GET', userId)
+    return achievements.map((ua: any) => ({
+      ...ua,
+      achievement: ua.achievement_id ? {
+        id: ua.achievement_id,
+        title: ua.title,
+        description: ua.description,
+        icon: ua.icon,
+        rarity: ua.rarity,
+        points: ua.points,
+        created_at: ''
+      } : undefined
+    }))
+  } catch (error) {
+    console.error('Error fetching user achievements:', error)
+    return []
+  }
 }
 
 export async function updateAchievementProgress(userId: string, achievementId: string, progress: number): Promise<UserAchievement | null> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  const achievement = mockUserAchievements.find(ua => ua.achievement_id === achievementId)
-  if (achievement) {
-    achievement.progress = progress
-    achievement.unlocked = progress >= 100
+  try {
+    return await apiCall('update-achievement', 'POST', userId, { achievementId, progress })
+  } catch (error) {
+    console.error('Error updating achievement progress:', error)
+    return null
   }
-  return achievement || null
 }
 
 export async function getLeaderboard(limit: number = 10): Promise<LeaderboardEntry[]> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  return mockLeaderboard.slice(0, limit)
+  try {
+    const url = new URL('/api/database', window.location.origin)
+    url.searchParams.set('action', 'leaderboard')
+    url.searchParams.set('limit', limit.toString())
+    
+    const response = await fetch(url.toString())
+    if (!response.ok) throw new Error('Failed to fetch leaderboard')
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error)
+    return []
+  }
 }
 
 export async function getDailyChallenges(): Promise<DailyChallenge[]> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  return mockDailyChallenges
+  try {
+    return await apiCall('daily-challenges', 'GET')
+  } catch (error) {
+    console.error('Error fetching daily challenges:', error)
+    return []
+  }
 }
 
 export async function getUserChallenges(userId: string): Promise<UserChallenge[]> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  return mockUserChallenges
+  try {
+    const challenges = await apiCall('user-challenges', 'GET', userId)
+    return challenges.map((uc: any) => ({
+      ...uc,
+      challenge: uc.challenge_id ? {
+        id: uc.challenge_id,
+        title: uc.title,
+        description: uc.description,
+        type: uc.type,
+        target_value: uc.target_value,
+        points: uc.points,
+        active: true,
+        created_at: '',
+        expires_at: ''
+      } : undefined
+    }))
+  } catch (error) {
+    console.error('Error fetching user challenges:', error)
+    return []
+  }
 }
 
 export async function updateChallengeProgress(userId: string, challengeId: string, progress: number): Promise<UserChallenge | null> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  const challenge = mockUserChallenges.find(uc => uc.challenge_id === challengeId)
-  if (challenge) {
-    challenge.progress = progress
-    challenge.completed = progress >= 100
+  try {
+    return await apiCall('update-challenge', 'POST', userId, { challengeId, progress })
+  } catch (error) {
+    console.error('Error updating challenge progress:', error)
+    return null
   }
-  return challenge || null
 }
 
 export async function trackArticleInteraction(userId: string, interaction: Omit<ArticleInteraction, 'id' | 'user_id' | 'created_at'>): Promise<ArticleInteraction | null> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  console.log('Tracking article interaction:', interaction)
-  return {
-    id: 'interaction-' + Date.now(),
-    user_id: userId,
-    ...interaction,
-    created_at: new Date().toISOString()
+  try {
+    return await apiCall('track-interaction', 'POST', userId, interaction)
+  } catch (error) {
+    console.error('Error tracking article interaction:', error)
+    return null
   }
 }
 
@@ -333,22 +233,26 @@ export async function getUserStats(userId: string): Promise<{
   sharedCount: number
   likedCount: number
 }> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  return {
-    articlesRead: 156,
-    categoriesRead: 8,
-    totalReadTime: 1240,
-    bookmarkedCount: 23,
-    sharedCount: 12,
-    likedCount: 45
+  try {
+    return await apiCall('user-stats', 'GET', userId)
+  } catch (error) {
+    console.error('Error fetching user stats:', error)
+    return {
+      articlesRead: 0,
+      categoriesRead: 0,
+      totalReadTime: 0,
+      bookmarkedCount: 0,
+      sharedCount: 0,
+      likedCount: 0
+    }
   }
 }
 
 export async function updateStreak(userId: string): Promise<{ current: number; longest: number; isProtected: boolean }> {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  return {
-    current: 7,
-    longest: 23,
-    isProtected: true
+  try {
+    return await apiCall('update-streak', 'POST', userId)
+  } catch (error) {
+    console.error('Error updating streak:', error)
+    return { current: 0, longest: 0, isProtected: false }
   }
 }

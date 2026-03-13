@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Globe, Search, Bookmark, RefreshCw, AlertCircle, Share2, 
-  X, Newspaper, Moon, Sun, Zap, ExternalLink, TrendingUp, Activity, Brain, Trophy, Film
+  X, Newspaper, Moon, Sun, Zap, ExternalLink, TrendingUp, Activity, Brain, Trophy, Film,
+  Clock, Sparkles, Wind, Maximize2, Minimize2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNewsData } from '@/hooks/useNewsData'
@@ -30,6 +31,7 @@ export default function HomePageClient() {
   const [speedReadMode, setSpeedReadMode] = useState(false)
   const [zenMode, setZenMode] = useState(false)
   const [displayedCount, setDisplayedCount] = useState(10)
+  const loaderRef = useRef<HTMLDivElement>(null)
   const previousArticleCount = useRef(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
@@ -84,6 +86,28 @@ export default function HomePageClient() {
       if (e.key === 'r' && !e.metaKey && !e.ctrlKey) {
         refresh()
       }
+      // Infinite scroll
+      useEffect(() => {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            if (entries[0].isIntersecting && !loading && displayedCount < articles.length) {
+              setDisplayedCount((prev) => Math.min(prev + 10, articles.length))
+            }
+          },
+          { threshold: 0.1 }
+        )
+
+        if (loaderRef.current) {
+          observer.observe(loaderRef.current)
+        }
+
+        return () => observer.disconnect()
+      }, [loading, displayedCount, articles.length])
+
+      // Reset displayed count when category or search changes
+      useEffect(() => {
+        setDisplayedCount(10)
+      }, [selectedCategory, searchQuery])
       // 'b' to toggle bookmarks
       if (e.key === 'b' && !e.metaKey && !e.ctrlKey) {
         setShowBookmarks(prev => !prev)
@@ -286,64 +310,84 @@ export default function HomePageClient() {
                 </button>
               </div>
             ) : (
-              articles.map((article, index) => (
-                <motion.div
-                  key={article.url + index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => openArticle(article)}
-                  className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-cyber-blue/50 transition-all cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cyber-blue transition-colors">
+              <>
+                {articles.slice(0, displayedCount).map((article, index) => (
+                  <motion.article
+                    key={article.url + index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                    onClick={() => openArticle(article)}
+                    className="group bg-gray-900/50 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-cyber-blue/50 transition-all duration-300 cursor-pointer"
+                  >
+                    {article.urlToImage && (
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={article.urlToImage} 
+                          alt={article.title}
+                          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => (e.currentTarget.parentElement!.style.display = 'none')}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+                        <div className="absolute top-3 left-3">
+                          <span className="px-2 py-1 bg-cyber-blue/80 backdrop-blur-sm rounded text-xs text-white font-medium">
+                            {typeof article.source === 'object' ? article.source?.name : article.source}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-5">
+                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyber-blue transition-colors line-clamp-2">
                         {article.title}
                       </h3>
-                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">{article.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          {typeof article.source === 'object' ? article.source?.name : article.source}
-                        </span>
-                        <span className="text-xs text-gray-500">
+                      <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+                        {article.description}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3 h-3" />
                           {new Date(article.publishedAt).toLocaleDateString()}
-                        </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-cyber-blue">
+                            {Math.ceil((article.content?.length || 0) / 1000)} min read
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
+                        <button
+                          onClick={(e) => toggleBookmark(article, e)}
+                          className={`p-2 rounded-lg transition-all ${isBookmarked(article) ? 'bg-cyber-blue/20 text-cyber-blue' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                        >
+                          <Bookmark className={`w-4 h-4 ${isBookmarked(article) ? 'fill-current' : ''}`} />
+                        </button>
+                        <button
+                          onClick={(e) => handleShare(article, e)}
+                          className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-all"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-all ml-auto"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
                       </div>
                     </div>
-                    {article.urlToImage && (
-                      <img 
-                        src={article.urlToImage} 
-                        alt="" 
-                        className="w-24 h-24 object-cover rounded-lg hidden sm:block"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
-                    )}
+                  </motion.article>
+                ))}
+                
+                {/* Infinite scroll loader */}
+                {displayedCount < articles.length && (
+                  <div ref={loaderRef} className="flex justify-center py-8">
+                    <RefreshCw className="w-8 h-8 text-cyber-blue animate-spin" />
                   </div>
-                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
-                    <button
-                      onClick={(e) => toggleBookmark(article, e)}
-                      className={`p-2 rounded-lg transition-all ${isBookmarked(article) ? 'bg-cyber-blue/20 text-cyber-blue' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                    >
-                      <Bookmark className={`w-4 h-4 ${isBookmarked(article) ? 'fill-current' : ''}`} />
-                    </button>
-                    <button
-                      onClick={(e) => handleShare(article, e)}
-                      className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-all"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                    <a
-                      href={article.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-all ml-auto"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
-                </motion.div>
-              ))
+                )}
+              </>
             )}
           </div>
           

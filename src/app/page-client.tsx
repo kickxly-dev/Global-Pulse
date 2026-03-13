@@ -62,6 +62,7 @@ import { useThemeSchedule } from '@/hooks/useThemeSchedule'
 import { Globe, Settings as SettingsIcon, Bell, TrendingUp, MapPin, Moon, Sun, Zap, Command, Bookmark, BarChart3, Wifi, WifiOff, Activity, X, Mail } from 'lucide-react'
 import { useNewsData } from '@/hooks/useNewsData'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useCustomNews } from '@/hooks/useCustomNews'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useTheme } from '@/hooks/useTheme'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -116,11 +117,11 @@ export default function HomePageClient() {
   const previousArticleCount = useRef(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
-  const { articles, loading, error, refresh, totalResults, breakingNews, newArticlesCount, isBreakingNews, isAutoRefreshing, lastRefresh } = useNewsData({
-    category: selectedCategory,
-    query: searchQuery,
-    country: country,
-  })
+  const { articles, loading, error, refresh, lastUpdated } = useCustomNews(
+    selectedCategory,
+    searchQuery,
+    60000 // 1 minute refresh
+  )
   
   // Infinite scroll
   const { displayedItems, hasMore, loaderRef } = useInfiniteScroll({ items: articles, pageSize: 10 })
@@ -317,7 +318,7 @@ export default function HomePageClient() {
                 </div>
               )}
               
-              <LiveIndicator count={totalResults} />
+              <LiveIndicator count={articles.length} />
               
               {/* Analytics */}
               <button
@@ -408,23 +409,78 @@ export default function HomePageClient() {
                 </button>
               )
             })}
+
+            {/* Push Notifications */}
+            <button
+              onClick={() => setShowPushNotifications(true)}
+              className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:border-cyber-green/50 hover:text-cyber-green transition-all"
+              title="Push Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">Alerts</span>
+            </button>
+
+            {/* Settings */}
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-all ${showSettings ? 'bg-cyber-blue/20 border-cyber-blue text-cyber-blue' : 'bg-white/5 border-white/10 text-gray-300 hover:border-cyber-blue/50'}`}
+            >
+              <SettingsIcon className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">Settings</span>
+            </button>
+
+            {/* Keyboard Shortcuts */}
+            <button
+              onClick={() => showShortcutsHelp()}
+              className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:border-cyber-green/50 transition-all"
+              title="Keyboard shortcuts (?)"
+            >
+              <Command className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">Keys</span>
+            </button>
+            
+            {/* User Menu */}
+            <div className="pl-2 border-l border-white/10">
+              <UserMenu />
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* Breaking News Banner */}
+        {/* Categories */}
+        <div className="flex items-center space-x-2 pb-4 overflow-x-auto scrollbar-thin">
+          {categories.map((cat) => {
+            const Icon = cat.icon
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md border transition-all duration-300 whitespace-nowrap ${
+                  selectedCategory === cat.id
+                    ? 'bg-cyber-blue/20 border-cyber-blue text-cyber-blue shadow-glow-blue'
+                    : 'bg-cyber-dark/50 border-gray-700 text-gray-400 hover:border-gray-500'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{cat.name}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </header>
+
+    {/* Breaking News Banner */}
+    {articles.length > 0 && (
       <BreakingNewsBanner
-        articles={breakingNews}
+        articles={articles.slice(0, 3)}
         onArticleClick={(article) => {
           setFullArticleView(article)
         }}
-        onDismiss={() => {
-          // Optional: track dismissed breaking news
-        }}
       />
+    )}
 
-      {/* Trending Topics Ticker */}
-      <TrendingTopicsTicker />
+    {/* Trending Topics Ticker */}
+    <TrendingTopicsTicker />
 
       {/* Smart Search */}
       <div className="container mx-auto px-4 py-6">
@@ -571,7 +627,7 @@ export default function HomePageClient() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
               >
-                <PulseScore articles={articles} totalResults={totalResults} />
+                <PulseScore articles={articles} totalResults={articles.length} />
               </motion.div>
             )}
 
@@ -811,8 +867,8 @@ export default function HomePageClient() {
 
       {/* Auto Refresh Indicator */}
       <AutoRefreshIndicator
-        isAutoRefreshing={isAutoRefreshing}
-        lastRefresh={lastRefresh}
+        isAutoRefreshing={loading}
+        lastRefresh={lastUpdated}
       />
     </div>
   )

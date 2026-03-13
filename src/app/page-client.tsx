@@ -38,6 +38,7 @@ import TrendPrediction from '@/components/TrendPrediction'
 import Gamification from '@/components/Gamification'
 import DeveloperAPI from '@/components/DeveloperAPI'
 import BookmarkCollections from '@/components/BookmarkCollections'
+import NewsletterGenerator from '@/components/NewsletterGenerator'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -738,6 +739,7 @@ export default function HomePageClient() {
               <SentimentDashboard />
               <NewsComparison />
               <CollaborativeCuration />
+              <NewsletterGenerator />
               <DeveloperAPI />
               <BookmarkCollections />
               <AudioSummary article={selectedArticle} />

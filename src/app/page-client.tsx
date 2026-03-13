@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Globe, Bookmark, RefreshCw, Share2, 
   X, Newspaper, Moon, Sun, Zap, ExternalLink, TrendingUp, 
-  Clock, BookOpen, Heart, Flame, ArrowRight, Menu, Sparkles, Radio, Bell, AlertTriangle
+  Clock, BookOpen, Heart, Flame, ArrowRight, Menu, Sparkles, Radio, Bell, AlertTriangle,
+  Search, ChevronUp, Eye, ThumbsUp, Info, Command, HelpCircle, Play, Pause
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNewsData } from '@/hooks/useNewsData'
@@ -42,6 +43,10 @@ export default function HomePageClient() {
   const [newArticlesCount, setNewArticlesCount] = useState(0)
   const [showNewArticlesBadge, setShowNewArticlesBadge] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [showSearch, setShowSearch] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
+  const [showScrollTop, setShowScrollTop] = useState(false)
+  const [tickerPaused, setTickerPaused] = useState(false)
   const loaderRef = useRef<HTMLDivElement>(null)
   
   const { articles, loading, error, refresh, lastRefresh } = useNewsData({
@@ -67,6 +72,15 @@ export default function HomePageClient() {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
+  }, [])
+
+  // Scroll detection for scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 500)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   // Track new articles
@@ -211,8 +225,42 @@ export default function HomePageClient() {
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-cyber-pink/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
+      {/* Breaking News Ticker */}
+      {articles.length > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 text-white overflow-hidden">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 px-4 py-2 bg-rose-700 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-wider">Breaking</span>
+            </div>
+            <div 
+              className="flex-1 overflow-hidden py-2 cursor-pointer"
+              onClick={() => setTickerPaused(!tickerPaused)}
+            >
+              <motion.div
+                animate={{ x: tickerPaused ? 0 : undefined }}
+                className={`whitespace-nowrap ${!tickerPaused ? 'animate-marquee' : ''}`}
+              >
+                {articles.slice(0, 5).map((article, idx) => (
+                  <span key={idx} className="mx-8 text-sm font-medium">
+                    {article.title}
+                    {idx < 4 && <span className="mx-4 text-rose-300">•</span>}
+                  </span>
+                ))}
+              </motion.div>
+            </div>
+            <button 
+              onClick={() => setTickerPaused(!tickerPaused)}
+              className="flex-shrink-0 px-3 py-2 hover:bg-rose-700 transition-colors"
+            >
+              {tickerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-slate-900/70 border-b border-white/5">
+      <header className={`sticky z-50 backdrop-blur-2xl bg-slate-900/70 border-b border-white/5 ${articles.length > 0 ? 'top-10' : 'top-0'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -270,6 +318,22 @@ export default function HomePageClient() {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              {/* Search Button */}
+              <button
+                onClick={() => setShowSearch(true)}
+                className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+
+              {/* Help Button */}
+              <button
+                onClick={() => setShowHelp(true)}
+                className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
+              
               {/* Reading Modes - Desktop */}
               <div className="hidden md:flex items-center gap-1 p-1 bg-white/5 rounded-full">
                 <button
@@ -727,6 +791,120 @@ export default function HomePageClient() {
         isOpen={showDailyDigest}
         onClose={() => setShowDailyDigest(false)}
       />
+
+      {/* Search Modal */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-start justify-center pt-20 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowSearch(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl bg-slate-800 rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+            >
+              <div className="p-4 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <Search className="w-5 h-5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search articles..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent text-white placeholder-slate-400 focus:outline-none text-lg"
+                    autoFocus
+                  />
+                  <button onClick={() => setShowSearch(false)} className="p-2 hover:bg-white/10 rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="max-h-96 overflow-y-auto p-2">
+                {searchQuery && articles.filter(a => 
+                  a.title?.toLowerCase().includes(searchQuery.toLowerCase())
+                ).slice(0, 5).map((article, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => { setShowSearch(false); openArticle(article); }}
+                    className="w-full p-3 text-left rounded-lg hover:bg-white/5 transition-all"
+                  >
+                    <p className="font-medium line-clamp-1">{article.title}</p>
+                    <p className="text-xs text-slate-500 mt-1">{article.source?.name}</p>
+                  </button>
+                ))}
+                {searchQuery && articles.filter(a => 
+                  a.title?.toLowerCase().includes(searchQuery.toLowerCase())
+                ).length === 0 && (
+                  <p className="p-4 text-center text-slate-400">No results found</p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Help Modal */}
+      <AnimatePresence>
+        {showHelp && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowHelp(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-slate-800 rounded-2xl border border-white/10 shadow-2xl p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Keyboard Shortcuts</h2>
+                <button onClick={() => setShowHelp(false)} className="p-2 hover:bg-white/10 rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { key: 'B', action: 'Toggle bookmarks panel' },
+                  { key: 'T', action: 'Cycle theme' },
+                  { key: '/', action: 'Open search' },
+                  { key: 'R', action: 'Refresh articles' },
+                  { key: 'ESC', action: 'Close modals' },
+                ].map((shortcut, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-2 border-b border-white/5">
+                    <span className="text-slate-400">{shortcut.action}</span>
+                    <kbd className="px-3 py-1.5 bg-slate-700 rounded-lg text-sm font-mono">{shortcut.key}</kbd>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-50 p-4 bg-cyber-blue rounded-full shadow-lg shadow-cyber-blue/30 hover:bg-cyber-blue/80 transition-all"
+          >
+            <ChevronUp className="w-6 h-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Footer */}
       <footer className="border-t border-white/5 bg-slate-900/50 backdrop-blur-sm">

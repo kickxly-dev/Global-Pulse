@@ -43,7 +43,9 @@ module.exports = {
         'scan': 'scan 2s linear infinite',
         'fade-in': 'fade-in 0.5s ease-out',
         'shimmer': 'shimmer 2s linear infinite',
-        'alert-pulse': 'alert-pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+        'alert-pulse': 'alert-pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'marquee': 'marquee 30s linear infinite',
+        'spin-slow': 'spin 3s linear infinite'
       },
       keyframes: {
         'pulse-glow': {
@@ -125,6 +127,14 @@ module.exports = {
           '50%': {
             transform: 'scale(1.05)',
             opacity: '0.9'
+          }
+        },
+        'marquee': {
+          '0%': {
+            transform: 'translateX(100%)'
+          },
+          '100%': {
+            transform: 'translateX(-100%)'
           }
         }
       },

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Globe, Search, Bookmark, RefreshCw, AlertCircle, Share2, 
@@ -255,7 +255,23 @@ export default function HomePageClient() {
             </motion.div>
             
             <div className="flex items-center space-x-2">
-              {/* Reading Modes */}
+              {/* Global Mood */}
+              {globalMood && (
+                <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-cyber-purple" />
+                    Global Mood
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      globalMood.dominant === 'positive' ? 'bg-green-500' :
+                      globalMood.dominant === 'negative' ? 'bg-red-500' : 'bg-yellow-500'
+                    }`} />
+                    <span className="text-white capitalize">{globalMood.dominant}</span>
+                    <span className="text-gray-500 text-sm">({globalMood.score > 0 ? '+' : ''}{globalMood.score.toFixed(2)})</span>
+                  </div>
+                </div>
+              )}
               <div className="hidden md:flex items-center space-x-1 bg-white/5 rounded-lg p-1">
                 <button
                   onClick={() => setTldrMode(!tldrMode)}
@@ -324,7 +340,7 @@ export default function HomePageClient() {
             </div>
           </div>
           
-          <div className="flex items-center space-x-1 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex items-center justify-between text-xs text-gray-500">
             {categories.map((category) => {
               const Icon = category.icon
               return (
@@ -351,8 +367,11 @@ export default function HomePageClient() {
           <div className="lg:col-span-3 space-y-4">
             {loading && articles.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <RefreshCw className="w-12 h-12 text-cyber-blue animate-spin" />
-                <p className="text-gray-400">Loading latest news...</p>
+                <div className="relative">
+                  <Globe className="w-16 h-16 text-cyber-blue animate-spin-slow" />
+                  <div className="absolute inset-0 bg-cyber-blue/30 rounded-full blur-xl animate-pulse" />
+                </div>
+                <p className="text-gray-400 animate-pulse">Loading latest news...</p>
               </div>
             ) : error ? (
               <div className="text-center py-12">

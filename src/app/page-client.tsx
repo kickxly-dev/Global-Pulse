@@ -147,11 +147,13 @@ export default function HomePageClient() {
     return bookmarkedArticles.some(a => a.url === article.url)
   }
 
-  // Toggle bookmark
+  // Toggle bookmark with proper state handling
   const toggleBookmark = (article: any, e?: React.MouseEvent) => {
     e?.stopPropagation()
+    e?.preventDefault()
+    
     const bookmarked = isBookmarked(article)
-    let newBookmarks
+    let newBookmarks: any[]
     
     if (bookmarked) {
       newBookmarks = bookmarkedArticles.filter(a => a.url !== article.url)
@@ -162,7 +164,13 @@ export default function HomePageClient() {
     }
     
     setBookmarkedArticles(newBookmarks)
-    localStorage.setItem('bookmarkedArticles', JSON.stringify(newBookmarks))
+    
+    // Save to localStorage immediately
+    try {
+      localStorage.setItem('bookmarkedArticles', JSON.stringify(newBookmarks))
+    } catch (err) {
+      console.error('Failed to save bookmarks:', err)
+    }
   }
 
   // Open article

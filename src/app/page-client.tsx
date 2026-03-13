@@ -7,7 +7,7 @@ import {
   X, Newspaper, Moon, Sun, Zap, 
   Clock, BookOpen, Heart, Flame, ArrowRight, Menu, Sparkles, Radio, Bell, AlertTriangle,
   Search, ChevronUp, Eye, ThumbsUp, HelpCircle, Play, Pause, ArrowUpRight, TrendingUp,
-  MessageCircle, Loader2, RefreshCcw, Sparkles as SparklesIcon
+  MessageCircle, Loader2, RefreshCcw, Sparkles as SparklesIcon, Mic
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNewsData } from '@/hooks/useNewsData'
@@ -19,6 +19,13 @@ import WorldMap from '@/components/WorldMap'
 import CleanLoader from '@/components/CleanLoader'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import AuthModal from '@/components/AuthModal'
+import TrendingSidebar from '@/components/TrendingSidebar'
+import ReactionBar from '@/components/ReactionBar'
+import NewsPodcast from '@/components/NewsPodcast'
+import NewsTimeline from '@/components/NewsTimeline'
+import VoiceSearch from '@/components/VoiceSearch'
+import NewsQuiz from '@/components/NewsQuiz'
+import SharePanel from '@/components/SharePanel'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -52,6 +59,10 @@ export default function HomePageClient() {
   const [initialLoad, setInitialLoad] = useState(true)
   const [showAuth, setShowAuth] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string } | null>(null)
+  const [showVoiceSearch, setShowVoiceSearch] = useState(false)
+  const [showSharePanel, setShowSharePanel] = useState(false)
+  const [shareArticleData, setShareArticleData] = useState<any>(null)
+  const [showTimeline, setShowTimeline] = useState(false)
   const loaderRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
   const { scrollYProgress } = useScroll()
@@ -387,6 +398,8 @@ export default function HomePageClient() {
 
             <div className="flex items-center gap-1">
               <button onClick={() => setShowSearch(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-all"><Search className="w-5 h-5 text-white/60" /></button>
+              <button onClick={() => setShowVoiceSearch(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-all"><Mic className="w-5 h-5 text-white/60" /></button>
+              <button onClick={() => setShowTimeline(!showTimeline)} className={`p-2.5 rounded-full transition-all ${showTimeline ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-white/5'}`}><Clock className="w-5 h-5 text-white/60" /></button>
               <button onClick={() => setShowHelp(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-all"><HelpCircle className="w-5 h-5 text-white/60" /></button>
               <div className="hidden md:flex items-center gap-1 ml-2 pl-2 border-l border-white/10">
                 <button onClick={() => setShowBookmarks(true)} className="relative p-2.5 rounded-full hover:bg-white/5 transition-all">
@@ -624,6 +637,35 @@ export default function HomePageClient() {
             <WorldMap />
           </section>
         )}
+
+        {/* Main Content with Sidebar */}
+        <section className="max-w-7xl mx-auto px-6 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Column */}
+            <div className="lg:col-span-2">
+              {/* Timeline Toggle */}
+              <AnimatePresence>
+                {showTimeline && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-8"
+                  >
+                    <NewsTimeline />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            
+            {/* Sidebar */}
+            <div className="space-y-6">
+              <TrendingSidebar />
+              <NewsPodcast />
+              <NewsQuiz />
+            </div>
+          </div>
+        </section>
 
         {/* Reading Mode Banner */}
         <AnimatePresence>
@@ -892,6 +934,37 @@ export default function HomePageClient() {
         onClose={() => setShowAuth(false)} 
         onAuth={(user) => setCurrentUser(user)} 
       />
+
+      {/* Voice Search */}
+      <AnimatePresence>
+        {showVoiceSearch && (
+          <VoiceSearch 
+            onResult={(transcript) => {
+              setSearchQuery(transcript)
+              setShowVoiceSearch(false)
+            }}
+            onClose={() => setShowVoiceSearch(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Share Panel */}
+      <AnimatePresence>
+        {showSharePanel && shareArticleData && (
+          <SharePanel
+            article={{
+              title: shareArticleData.title,
+              url: shareArticleData.url,
+              description: shareArticleData.description,
+              source: shareArticleData.source
+            }}
+            onClose={() => {
+              setShowSharePanel(false)
+              setShareArticleData(null)
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

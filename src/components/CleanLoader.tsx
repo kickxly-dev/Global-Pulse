@@ -16,31 +16,31 @@ export default function CleanLoader() {
         {/* Outer ring */}
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
           className="absolute inset-0 rounded-full border-2 border-cyan-500/20"
-          style={{ width: 120, height: 120, left: -24, top: -24 }}
+          style={{ width: 140, height: 140, left: -34, top: -34 }}
         />
         
         {/* Middle ring */}
         <motion.div
           animate={{ rotate: -360 }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
           className="absolute rounded-full border border-white/10"
-          style={{ width: 100, height: 100, left: -14, top: -14 }}
+          style={{ width: 120, height: 120, left: -24, top: -24 }}
         />
         
         {/* Inner pulse */}
         <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 2, repeat: Infinity }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 3, repeat: Infinity }}
           className="absolute rounded-full bg-gradient-to-r from-cyan-500/10 to-blue-500/10"
-          style={{ width: 80, height: 80, left: -4, top: -4 }}
+          style={{ width: 100, height: 100, left: -14, top: -14 }}
         />
         
         {/* Globe icon */}
         <motion.div
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ y: [0, -8, 0], rotate: [0, 5, -5, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         >
           <Globe className="w-16 h-16 text-white" />
         </motion.div>
@@ -55,24 +55,20 @@ export default function CleanLoader() {
       >
         <motion.p
           animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 2, repeat: Infinity }}
+          transition={{ duration: 3, repeat: Infinity }}
           className="text-white/60 text-sm tracking-widest uppercase"
         >
           Loading
         </motion.p>
         
         {/* Animated dots */}
-        <div className="flex items-center justify-center gap-1 mt-3">
-          {[0, 1, 2].map((i) => (
+        <div className="flex items-center justify-center gap-2 mt-3">
+          {[0, 1, 2, 3].map((i) => (
             <motion.div
               key={i}
-              animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
-              transition={{ 
-                duration: 1, 
-                repeat: Infinity, 
-                delay: i * 0.2 
-              }}
-              className="w-1.5 h-1.5 rounded-full bg-cyan-400"
+              animate={{ scale: [1, 1.8, 1], opacity: [0.2, 1, 0.2] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.25 }}
+              className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400"
             />
           ))}
         </div>
@@ -81,20 +77,26 @@ export default function CleanLoader() {
       {/* Progress bar */}
       <motion.div
         initial={{ opacity: 0, width: 0 }}
-        animate={{ opacity: 1, width: 200 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-        className="mt-8 h-0.5 bg-white/10 rounded-full overflow-hidden"
+        animate={{ opacity: 1, width: 240 }}
+        transition={{ delay: 0.8, duration: 0.8 }}
+        className="mt-10 h-1 bg-white/10 rounded-full overflow-hidden"
       >
         <motion.div
-          animate={{ x: [-200, 200] }}
-          transition={{ 
-            duration: 1.5, 
-            repeat: Infinity, 
-            ease: 'easeInOut' 
-          }}
+          animate={{ x: [-240, 240] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
           className="w-1/2 h-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
         />
       </motion.div>
+      
+      {/* Tagline */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.3 }}
+        transition={{ delay: 1.5 }}
+        className="mt-6 text-xs text-white/30 tracking-wider"
+      >
+        Your window to the world
+      </motion.p>
     </div>
   )
 }

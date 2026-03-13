@@ -18,6 +18,7 @@ import DailyDigest from '@/components/DailyDigest'
 import WorldMap from '@/components/WorldMap'
 import CleanLoader from '@/components/CleanLoader'
 import OfflineIndicator from '@/components/OfflineIndicator'
+import AuthModal from '@/components/AuthModal'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -49,6 +50,9 @@ export default function HomePageClient() {
   const [loadingSummary, setLoadingSummary] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
   const [initialLoad, setInitialLoad] = useState(true)
+  const [showAuth, setShowAuth] = useState(false)
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string } | null>(null)
+  const [featuredIndex, setFeaturedIndex] = useState(0)
   const loaderRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
   const { scrollYProgress } = useScroll()
@@ -84,9 +88,43 @@ export default function HomePageClient() {
   // Hide initial loader after first load
   useEffect(() => {
     if (!loading && articles.length > 0) {
-      setTimeout(() => setInitialLoad(false), 500)
+      setTimeout(() => setInitialLoad(false), 2000)
     }
   }, [loading, articles])
+
+  // Check for existing auth on mount
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('user')
+      if (savedUser) {
+        setCurrentUser(JSON.parse(savedUser))
+      }
+    } catch (err) {
+      console.error('Failed to load user:', err)
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('userToken')
+    localStorage.removeItem('user')
+    setCurrentUser(null)
+    toast.success('Logged out')
+  }
+
+  // Auto-rotate featured article every 10 seconds
+  useEffect(() => {
+    if (articles.length > 1) {
+      const interval = setInterval(() => {
+        setFeaturedIndex((prev) => (prev + 1) % Math.min(5, articles.length))
+      }, 10000)
+      return () => clearInterval(interval)
+    }
+  }, [articles.length])
+
+  // Reset featured index when category changes
+  useEffect(() => {
+    setFeaturedIndex(0)
+  }, [selectedCategory])
   
   const { theme, changeTheme } = useTheme()
 
@@ -270,8 +308,8 @@ export default function HomePageClient() {
     setHoverPosition({ x: e.clientX, y: e.clientY })
   }, [])
 
-  const featuredArticle = articles[0]
-  const trendingArticles = articles.slice(1, 5)
+  const featuredArticle = articles[featuredIndex]
+  const trendingArticles = articles.filter((_, i) => i !== featuredIndex).slice(0, 4)
   const currentCategory = categories.find(c => c.id === selectedCategory)
 
   return (
@@ -381,6 +419,21 @@ export default function HomePageClient() {
                 <button onClick={refresh} disabled={loading} className="p-2.5 rounded-full hover:bg-white/5 transition-all disabled:opacity-30">
                   <RefreshCw className={`w-5 h-5 text-white/60 ${loading ? 'animate-spin' : ''}`} />
                 </button>
+                {/* User Auth Button */}
+                {currentUser ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-sm font-bold">
+                      {currentUser.name?.[0]?.toUpperCase() || currentUser.email[0].toUpperCase()}
+                    </div>
+                    <button onClick={handleLogout} className="text-xs text-white/40 hover:text-white transition-colors">
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowAuth(true)} className="px-4 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-sm font-medium hover:opacity-90 transition-opacity">
+                    Sign In
+                  </button>
+                )}
               </div>
               <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2.5 rounded-full hover:bg-white/5 transition-all ml-2"><Menu className="w-5 h-5 text-white/60" /></button>
             </div>
@@ -781,6 +834,13 @@ export default function HomePageClient() {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuth} 
+        onClose={() => setShowAuth(false)} 
+        onAuth={(user) => setCurrentUser(user)} 
+      />
     </div>
   )
 }

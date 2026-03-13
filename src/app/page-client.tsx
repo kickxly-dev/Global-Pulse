@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Globe, Search, Bookmark, RefreshCw, AlertCircle, Share2, 
   X, Newspaper, Moon, Sun, Zap, ExternalLink, TrendingUp, Activity, Brain, Trophy, Film,
-  Clock, Sparkles, Wind, Maximize2, Minimize2
+  Clock, Sparkles, Wind, Maximize2, Minimize2, BookOpen
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNewsData } from '@/hooks/useNewsData'
@@ -358,6 +358,7 @@ export default function HomePageClient() {
               >
                 <RefreshCw className={`w-5 h-5 text-gray-300 ${loading ? 'animate-spin' : ''}`} />
               </button>
+              </div>
             </div>
           </div>
           

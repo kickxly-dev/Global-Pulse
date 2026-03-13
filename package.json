@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postbuild": "cp public/sw.js .next/sw.js"
+    "postbuild": "node -e \"require('fs').copyFileSync('public/sw.js', '.next/sw.js')\""
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",

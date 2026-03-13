@@ -283,35 +283,45 @@ export default function HomePageClient() {
             </motion.div>
             
             <div className="flex items-center space-x-2">
-              <div className="hidden md:flex items-center space-x-1 bg-white/5 rounded-lg p-1">
-                <button
-                  onClick={() => setTldrMode(!tldrMode)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    tldrMode ? 'bg-cyber-blue text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                  title="TLDR Mode"
-                >
-                  TLDR
-                </button>
-                <button
-                  onClick={() => setSpeedReadMode(!speedReadMode)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    speedReadMode ? 'bg-cyber-purple text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                  title="Speed Read"
-                >
-                  Speed
-                </button>
-                <button
-                  onClick={() => setZenMode(!zenMode)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    zenMode ? 'bg-cyber-green text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                  title="Zen Mode"
-                >
-                  Zen
-                </button>
-              </div>
+              <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm rounded-xl p-1.5 border border-white/10">
+                  <button
+                    onClick={() => setTldrMode(!tldrMode)}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
+                      tldrMode 
+                        ? 'bg-cyber-blue text-white shadow-lg shadow-cyber-blue/30' 
+                        : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    }`}
+                    title="TLDR Mode - Show only short articles"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    TLDR
+                  </button>
+                  <button
+                    onClick={() => setSpeedReadMode(!speedReadMode)}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
+                      speedReadMode 
+                        ? 'bg-cyber-purple text-white shadow-lg shadow-cyber-purple/30' 
+                        : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    }`}
+                    title="Speed Read - Show 10 most recent articles"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    Speed
+                  </button>
+                  <button
+                    onClick={() => setZenMode(!zenMode)}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
+                      zenMode 
+                        ? 'bg-cyber-green text-white shadow-lg shadow-cyber-green/30' 
+                        : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    }`}
+                    title="Zen Mode - Minimal distraction, 3 articles only"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    Zen
+                  </button>
+                </div>
 
               <button
                 onClick={() => setShowBookmarks(true)}

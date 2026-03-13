@@ -19,14 +19,10 @@ import CleanLoader from '@/components/CleanLoader'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import AuthModal from '@/components/AuthModal'
 import TrendingSidebar from '@/components/TrendingSidebar'
-import ReactionBar from '@/components/ReactionBar'
-import NewsPodcast from '@/components/NewsPodcast'
 import NewsTimeline from '@/components/NewsTimeline'
 import VoiceSearch from '@/components/VoiceSearch'
 import NewsQuiz from '@/components/NewsQuiz'
 import SharePanel from '@/components/SharePanel'
-import LiveVideoSection from '@/components/LiveVideoSection'
-import NewsArchive from '@/components/NewsArchive'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import CategoriesCarousel from '@/components/CategoriesCarousel'
 
@@ -551,14 +547,17 @@ export default function HomePageClient() {
             style={{ y: heroY }}
             className="relative min-h-[70vh] md:min-h-[80vh] flex items-end overflow-hidden"
           >
-            {featuredArticle.urlToImage && (
+            {/* Background Image or Gradient Fallback */}
+            {featuredArticle.urlToImage ? (
               <motion.div 
                 style={{ scale: heroScale, opacity: heroOpacity }}
                 className="absolute inset-0"
               >
                 <img src={featuredArticle.urlToImage} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30" />
               </motion.div>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/30 via-black to-purple-900/30" />
             )}
             
             {/* Breaking News Banner */}
@@ -712,10 +711,7 @@ export default function HomePageClient() {
             {/* Sidebar */}
             <div className="space-y-6">
               <TrendingSidebar />
-              <LiveVideoSection />
-              <NewsPodcast />
               <NewsQuiz />
-              <NewsArchive />
             </div>
           </div>
         </section>

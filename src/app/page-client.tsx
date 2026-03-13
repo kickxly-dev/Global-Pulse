@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
 import { 
   Globe, Bookmark, RefreshCw, Share2, 
   X, Newspaper, Moon, Sun, Zap, 
   Clock, BookOpen, Heart, Flame, ArrowRight, Menu, Sparkles, Radio, Bell, AlertTriangle,
-  Search, ChevronUp, Eye, ThumbsUp, HelpCircle, Play, Pause, ArrowUpRight, TrendingUp
+  Search, ChevronUp, Eye, ThumbsUp, HelpCircle, Play, Pause, ArrowUpRight, TrendingUp,
+  MessageCircle, Loader2, RefreshCcw, Sparkles as SparklesIcon
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNewsData } from '@/hooks/useNewsData'
@@ -38,10 +39,21 @@ export default function HomePageClient() {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [tickerPaused, setTickerPaused] = useState(false)
   const [hoveredArticle, setHoveredArticle] = useState<any>(null)
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [pullDistance, setPullDistance] = useState(0)
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [loadingSummary, setLoadingSummary] = useState(false)
   const loaderRef = useRef<HTMLDivElement>(null)
+  const touchStartY = useRef(0)
   const { scrollYProgress } = useScroll()
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
   
   const headerOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0.95])
+  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, 150])
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0])
+  const heroScale = useTransform(scrollYProgress, [0, 0.25], [1, 1.1])
   
   const { articles, loading, error, refresh, lastRefresh, newArticlesCount: hookNewCount, breakingNews } = useNewsData({
     category: selectedCategory,
@@ -169,6 +181,69 @@ export default function HomePageClient() {
 
   const openArticle = useCallback((article: any) => { setSelectedArticle(article); setShowArticle(true) }, [])
   const handleShare = useCallback((article: any, e?: React.MouseEvent) => { e?.stopPropagation(); setShareArticle(article); setShowShare(true) }, [])
+
+  // Calculate reading time
+  const getReadingTime = useCallback((text: string) => {
+    const words = text?.split(' ').length || 0
+    return Math.max(1, Math.ceil(words / 200))
+  }, [])
+
+  // Pull to refresh
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      touchStartY.current = e.touches[0].clientY
+    }
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartY.current > 0 && window.scrollY === 0) {
+      const distance = e.touches[0].clientY - touchStartY.current
+      setPullDistance(Math.min(distance, 100))
+    }
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    if (pullDistance > 80 && !isRefreshing) {
+      setIsRefreshing(true)
+      refresh()
+      setTimeout(() => {
+        setIsRefreshing(false)
+        setPullDistance(0)
+      }, 1000)
+    } else {
+      setPullDistance(0)
+    }
+    touchStartY.current = 0
+  }, [pullDistance, isRefreshing, refresh])
+
+  // AI TLDR Summary
+  const generateAiSummary = useCallback(async (article: any) => {
+    if (!article?.content && !article?.description) return
+    setLoadingSummary(true)
+    try {
+      const res = await fetch('/api/ai-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: article.title, content: article.content || article.description })
+      })
+      const data = await res.json()
+      setAiSummary(data.summary)
+    } catch (err) {
+      console.error('AI summary failed:', err)
+    } finally {
+      setLoadingSummary(false)
+    }
+  }, [])
+
+  // Track hover position for preview card
+  const handleArticleHover = useCallback((article: any, e: React.MouseEvent) => {
+    setHoveredArticle(article)
+    setHoverPosition({ x: e.clientX, y: e.clientY })
+  }, [])
+
+  const handleArticleMouseMove = useCallback((e: React.MouseEvent) => {
+    setHoverPosition({ x: e.clientX, y: e.clientY })
+  }, [])
 
   const featuredArticle = articles[0]
   const trendingArticles = articles.slice(1, 5)
@@ -328,15 +403,34 @@ export default function HomePageClient() {
           )}
         </AnimatePresence>
 
-        {/* Hero Section */}
+        {/* Pull to Refresh Indicator */}
+        <motion.div 
+          style={{ height: pullDistance }}
+          className="flex items-center justify-center overflow-hidden"
+        >
+          <motion.div
+            animate={{ rotate: isRefreshing ? 360 : pullDistance * 2 }}
+            transition={{ duration: isRefreshing ? 1 : 0, repeat: isRefreshing ? Infinity : 0, ease: 'linear' }}
+          >
+            <RefreshCcw className="w-6 h-6 text-white/40" />
+          </motion.div>
+        </motion.div>
+
+        {/* Hero Section with Parallax */}
         {!loading && featuredArticle && !zenMode && (
-          <section className="relative min-h-[80vh] flex items-end pb-20 pt-10">
+          <motion.section 
+            style={{ y: heroY }}
+            className="relative min-h-[80vh] flex items-end pb-20 pt-10 overflow-hidden"
+          >
             {featuredArticle.urlToImage && (
-              <div className="absolute inset-0">
+              <motion.div 
+                style={{ scale: heroScale, opacity: heroOpacity }}
+                className="absolute inset-0"
+              >
                 <img src={featuredArticle.urlToImage} alt="" className="w-full h-full object-cover opacity-40" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
-              </div>
+              </motion.div>
             )}
             <div className="relative max-w-7xl mx-auto px-6 w-full">
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-3xl">
@@ -359,7 +453,7 @@ export default function HomePageClient() {
                 </div>
               </motion.div>
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* Trending Bar */}
@@ -420,7 +514,29 @@ export default function HomePageClient() {
 
           {loading && articles.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (<div key={i} className="rounded-2xl bg-white/5 border border-white/5 overflow-hidden animate-pulse"><div className="aspect-[16/10] bg-white/5" /><div className="p-6 space-y-3"><div className="h-4 bg-white/5 rounded w-1/3" /><div className="h-6 bg-white/5 rounded w-full" /><div className="h-4 bg-white/5 rounded w-2/3" /></div></div>))}
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="rounded-2xl bg-white/5 border border-white/5 overflow-hidden">
+                  <div className="aspect-[16/10] bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-shimmer bg-[length:200%_100%]" />
+                  <div className="p-6 space-y-3">
+                    <div className="flex justify-between">
+                      <div className="h-3 bg-white/5 rounded w-1/4 animate-pulse" />
+                      <div className="h-3 bg-white/5 rounded w-1/6 animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-5 bg-white/5 rounded w-full animate-pulse" />
+                      <div className="h-5 bg-white/5 rounded w-3/4 animate-pulse" />
+                    </div>
+                    <div className="h-4 bg-white/5 rounded w-2/3 animate-pulse" />
+                    <div className="flex justify-between pt-2">
+                      <div className="flex gap-2">
+                        <div className="h-3 bg-white/5 rounded w-12 animate-pulse" />
+                        <div className="h-3 bg-white/5 rounded w-12 animate-pulse" />
+                      </div>
+                      <div className="h-3 bg-white/5 rounded w-16 animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div className="text-center py-20">
@@ -431,7 +547,16 @@ export default function HomePageClient() {
             <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" initial="initial" animate="animate" variants={{ animate: { transition: { staggerChildren: 0.05 }}}}>
               <AnimatePresence mode="popLayout">
                 {filteredArticles.slice(zenMode ? 0 : 1).map((article, index) => (
-                  <motion.article key={article.url} variants={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -20 }}} layout onMouseEnter={() => setHoveredArticle(article)} onMouseLeave={() => setHoveredArticle(null)} onClick={() => openArticle(article)} className="group cursor-pointer rounded-2xl overflow-hidden bg-white/[0.03] border border-white/5 hover:border-white/20 hover:bg-white/[0.05] transition-all duration-300">
+                  <motion.article 
+                    key={article.url} 
+                    variants={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -20 }}} 
+                    layout 
+                    onMouseEnter={(e) => handleArticleHover(article, e)}
+                    onMouseMove={handleArticleMouseMove}
+                    onMouseLeave={() => setHoveredArticle(null)} 
+                    onClick={() => openArticle(article)} 
+                    className="group cursor-pointer rounded-2xl overflow-hidden bg-white/[0.03] border border-white/5 hover:border-white/20 hover:bg-white/[0.05] transition-all duration-300"
+                  >
                     {article.urlToImage && (
                       <div className="aspect-[16/10] overflow-hidden relative">
                         <img src={article.urlToImage} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -441,14 +566,18 @@ export default function HomePageClient() {
                     <div className="p-6">
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-xs font-semibold text-white/50">{article.source?.name}</span>
-                        <span className="text-xs text-white/30">{new Date(article.publishedAt).toLocaleDateString()}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-white/30 flex items-center gap-1"><Clock className="w-3 h-3" />{getReadingTime(article.content || article.description || '')} min</span>
+                          <span className="text-xs text-white/30">{new Date(article.publishedAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                       <h3 className="font-semibold text-lg mb-3 line-clamp-2 group-hover:text-white/80 transition-colors leading-snug">{article.title}</h3>
                       {!tldrMode && <p className="text-sm text-white/40 line-clamp-2 mb-4 leading-relaxed">{article.description}</p>}
                       <div className="flex items-center justify-between pt-4 border-t border-white/5">
                         <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1.5 text-xs text-white/30"><Eye className="w-3.5 h-3.5" />{Math.floor(Math.random() * 500 + 100)}</span>
-                          <span className="flex items-center gap-1.5 text-xs text-white/30"><ThumbsUp className="w-3.5 h-3.5" />{Math.floor(Math.random() * 50 + 10)}</span>
+                          <span className="flex items-center gap-1.5 text-xs text-white/30"><Eye className="w-3.5 h-3.5" />{article.viewCount || Math.floor(Math.random() * 500 + 100)}</span>
+                          <span className="flex items-center gap-1.5 text-xs text-white/30"><ThumbsUp className="w-3.5 h-3.5" />{article.likeCount || Math.floor(Math.random() * 50 + 10)}</span>
+                          <span className="flex items-center gap-1.5 text-xs text-white/30"><MessageCircle className="w-3.5 h-3.5" />{Math.floor(Math.random() * 20 + 5)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button onClick={(e) => toggleBookmark(article, e)} className={`p-2 rounded-lg transition-all ${isBookmarked(article) ? 'text-white bg-white/10' : 'text-white/30 hover:text-white hover:bg-white/5'}`}><Bookmark className="w-4 h-4" fill={isBookmarked(article) ? 'currentColor' : 'none'} /></button>
@@ -556,6 +685,35 @@ export default function HomePageClient() {
 
       {/* Daily Digest */}
       <DailyDigest isOpen={showDailyDigest} onClose={() => setShowDailyDigest(false)} />
+
+      {/* Hover Article Preview Card */}
+      <AnimatePresence>
+        {hoveredArticle && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            style={{
+              left: Math.min(hoverPosition.x + 20, window.innerWidth - 320),
+              top: Math.min(hoverPosition.y - 100, window.innerHeight - 300)
+            }}
+            className="fixed z-[80] w-80 p-4 bg-black/95 border border-white/10 rounded-xl shadow-2xl backdrop-blur-xl pointer-events-none"
+          >
+            {hoveredArticle.urlToImage && (
+              <img src={hoveredArticle.urlToImage} alt="" className="w-full h-32 object-cover rounded-lg mb-3" />
+            )}
+            <h4 className="font-semibold mb-2 line-clamp-2">{hoveredArticle.title}</h4>
+            <p className="text-xs text-white/50 mb-3 line-clamp-3">{hoveredArticle.description}</p>
+            <div className="flex items-center justify-between text-xs text-white/40">
+              <span>{hoveredArticle.source?.name}</span>
+              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{getReadingTime(hoveredArticle.content || hoveredArticle.description)} min</span>
+            </div>
+            <button className="mt-3 w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2">
+              <SparklesIcon className="w-3 h-3" /> Click to read
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Scroll to Top */}
       <AnimatePresence>

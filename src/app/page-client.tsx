@@ -31,6 +31,8 @@ export default function HomePageClient() {
   const [speedReadMode, setSpeedReadMode] = useState(false)
   const [zenMode, setZenMode] = useState(false)
   const [displayedCount, setDisplayedCount] = useState(10)
+  const [searchHistory, setSearchHistory] = useState<string[]>([])
+  const [showSearchHistory, setShowSearchHistory] = useState(false)
   const loaderRef = useRef<HTMLDivElement>(null)
   const previousArticleCount = useRef(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -46,9 +48,17 @@ export default function HomePageClient() {
 
   // Load bookmarks from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('bookmarkedArticles')
-    if (saved) {
-      setBookmarkedArticles(JSON.parse(saved))
+    try {
+      const saved = localStorage.getItem('bookmarkedArticles')
+      if (saved) {
+        setBookmarkedArticles(JSON.parse(saved))
+      }
+      const history = localStorage.getItem('searchHistory')
+      if (history) {
+        setSearchHistory(JSON.parse(history))
+      }
+    } catch (err) {
+      console.error('Failed to load from localStorage:', err)
     }
   }, [])
 
@@ -645,6 +655,42 @@ export default function HomePageClient() {
         isAutoRefreshing={loading}
         lastRefresh={lastRefresh}
       />
+
+      {/* Footer */}
+      <footer className="py-8 border-t border-white/10 bg-gray-900/50">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Globe className="w-6 h-6 text-cyber-blue" />
+              <span className="text-sm text-gray-400">
+                Global Pulse © {new Date().getFullYear()}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">B</kbd>
+                <span>Bookmarks</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">T</kbd>
+                <span>Theme</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">/</kbd>
+                <span>Search</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">R</kbd>
+                <span>Refresh</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">ESC</kbd>
+                <span>Close</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

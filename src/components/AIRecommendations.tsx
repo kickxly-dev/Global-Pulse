@@ -88,8 +88,8 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
   ]
 
   return (
-    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-2xl p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4 text-purple-400" />
           <h3 className="font-semibold">AI Recommendations</h3>
@@ -102,14 +102,14 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-3">
         {tabs.map((tab) => {
           const Icon = tab.icon
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                   : 'bg-white/5 text-white/60 hover:bg-white/10'
@@ -123,13 +123,13 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
       </div>
 
       {/* Tab Description */}
-      <p className="text-xs text-white/40 mb-4">
+      <p className="text-xs text-white/40 mb-3">
         {tabs.find(t => t.id === activeTab)?.description}
       </p>
 
       {/* Recommendations */}
       {loading ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="p-3 bg-white/5 rounded-lg animate-pulse">
               <div className="h-4 bg-white/10 rounded w-3/4 mb-2" />
@@ -138,7 +138,7 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
           ))}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Featured Top Recommendation */}
           {recommendations[0] && (
             <motion.div
@@ -146,32 +146,32 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0, duration: 0.4 }}
               onClick={() => onArticleClick(recommendations[0])}
-              className="p-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-lg border border-purple-500/30 hover:border-purple-500/50 cursor-pointer transition-all group relative overflow-hidden"
+              className="p-3 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-lg border border-purple-500/30 hover:border-purple-500/50 cursor-pointer transition-all group relative overflow-hidden"
             >
               <div className="absolute top-2 right-2">
                 <span className="px-2 py-1 bg-purple-500 text-white text-xs font-bold rounded-full">Featured</span>
               </div>
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 {recommendations[0].image && (
                   <img 
                     src={recommendations[0].image} 
                     alt="" 
-                    className="w-20 h-16 object-cover rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform"
+                    className="w-16 h-12 object-cover rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform"
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-purple-400 font-medium">{recommendations[0].category}</span>
                     <div className="flex items-center gap-1">
-                      <div className="relative w-12 h-12">
-                        <svg className="w-12 h-12 transform -rotate-90">
-                          <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="none" className="text-white/10" />
+                      <div className="relative w-10 h-10">
+                        <svg className="w-10 h-10 transform -rotate-90">
+                          <circle cx="20" cy="20" r="18" stroke="currentColor" strokeWidth="3" fill="none" className="text-white/10" />
                           <circle 
-                            cx="24" cy="24" r="20" 
+                            cx="20" cy="20" r="18" 
                             stroke="currentColor" 
-                            strokeWidth="4" 
+                            strokeWidth="3" 
                             fill="none" 
-                            strokeDasharray={`${recommendations[0].score * 1.26} 126`}
+                            strokeDasharray={`${recommendations[0].score * 1.13} 113`}
                             className="text-green-400 transition-all duration-1000"
                           />
                         </svg>
@@ -181,7 +181,7 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
                       </div>
                     </div>
                   </div>
-                  <h4 className="text-base font-bold line-clamp-2 mb-2 group-hover:text-purple-300 transition-colors">
+                  <h4 className="text-sm font-bold line-clamp-2 mb-1 group-hover:text-purple-300 transition-colors">
                     {recommendations[0].title}
                   </h4>
                   <div className="flex items-center justify-between">
@@ -249,8 +249,8 @@ export default function AIRecommendations({ userInterests = [], readingHistory =
       )}
 
       {/* AI Insights */}
-      <div className="mt-4 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="mt-3 p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+        <div className="flex items-center gap-2 mb-1">
           <Users className="w-3 h-3 text-purple-400" />
           <span className="text-xs font-medium text-purple-400">AI Insights</span>
         </div>

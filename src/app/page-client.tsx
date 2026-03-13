@@ -143,6 +143,19 @@ export default function HomePageClient() {
     setCurrentUser(null)
   }
   
+  const getCategoryStyle = (category: string) => {
+    const styles: { [key: string]: string } = {
+      general: 'bg-gray-500/20 text-gray-400 border border-gray-500/30',
+      business: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+      entertainment: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+      health: 'bg-green-500/20 text-green-400 border border-green-500/30',
+      science: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30',
+      sports: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
+      technology: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+    }
+    return styles[category.toLowerCase()] || styles.general
+  }
+  
   const { theme, changeTheme } = useTheme()
 
   useEffect(() => {
@@ -683,14 +696,14 @@ export default function HomePageClient() {
         {/* Trending Bar */}
         {!loading && trendingArticles.length > 0 && !zenMode && (
           <section className="border-y border-white/5 bg-white/[0.02]">
-            <div className="max-w-7xl mx-auto px-6 py-6">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center gap-3 mb-3">
                 <TrendingUp className="w-4 h-4 text-white/40" />
                 <span className="text-xs font-semibold tracking-wider text-white/40 uppercase">Trending Now</span>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {trendingArticles.map((article, idx) => (
-                  <motion.button key={article.url} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} onClick={() => openArticle(article)} className="group text-left p-4 rounded-xl border border-white/5 hover:border-white/20 hover:bg-white/5 transition-all">
+                  <motion.button key={article.url} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} onClick={() => openArticle(article)} className="group text-left p-3 rounded-xl border border-white/5 hover:border-white/20 hover:bg-white/5 transition-all">
                     <div className="flex items-start gap-3">
                       <span className="text-2xl font-bold text-white/20 group-hover:text-white/40 transition-colors">{String(idx + 2).padStart(2, '0')}</span>
                       <div className="flex-1 min-w-0">
@@ -707,24 +720,24 @@ export default function HomePageClient() {
 
         {/* World Map */}
         {!zenMode && (
-          <section className="max-w-7xl mx-auto px-6 py-8">
+          <section className="max-w-7xl mx-auto px-6 py-4">
             <WorldMap />
           </section>
         )}
 
         {/* Main Content with Sidebar */}
-        <section className="max-w-7xl mx-auto px-6 py-8">
+        <section className="max-w-7xl mx-auto px-6 py-6">
           {/* Categories Carousel */}
-          <div className="mb-6">
+          <div className="mb-4">
             <CategoriesCarousel 
               selectedCategory={selectedCategory} 
               onCategoryChange={setSelectedCategory} 
             />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Column */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
               {/* Timeline Toggle */}
               <AnimatePresence>
                 {showTimeline && (
@@ -732,16 +745,92 @@ export default function HomePageClient() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mb-8"
                   >
                     <NewsTimeline />
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Articles Grid */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold">Latest Stories</h2>
+                    <p className="text-xs text-white/40 mt-1">{articles.length} articles • Updated {lastRefresh ? new Date(lastRefresh).toLocaleTimeString() : '—'}</p>
+                  </div>
+                  <div className="hidden md:flex items-center gap-2">
+                    <button onClick={() => { setTldrMode(!tldrMode); setSpeedReadMode(false); setZenMode(false); }} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${tldrMode ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>TLDR</button>
+                    <button onClick={() => { setSpeedReadMode(!speedReadMode); setTldrMode(false); setZenMode(false); }} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${speedReadMode ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>Speed</button>
+                    <button onClick={() => { setZenMode(!zenMode); setTldrMode(false); setSpeedReadMode(false); }} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${zenMode ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>Zen</button>
+                  </div>
+                </div>
+
+                {loading && articles.length === 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="rounded-xl bg-white/5 border border-white/5 overflow-hidden">
+                        <div className="aspect-[16/10] bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-shimmer bg-[length:200%_100%]" />
+                        <div className="p-4 space-y-2">
+                          <div className="flex justify-between">
+                            <div className="h-2 bg-white/5 rounded w-1/4 animate-pulse" />
+                            <div className="h-2 bg-white/5 rounded w-1/6 animate-pulse" />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="h-4 bg-white/5 rounded w-full animate-pulse" />
+                            <div className="h-4 bg-white/5 rounded w-3/4 animate-pulse" />
+                          </div>
+                          <div className="h-3 bg-white/5 rounded w-2/3 animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {articles.map((article, idx) => (
+                      <motion.article
+                        key={article.url}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        onClick={() => openArticle(article)}
+                        className="group rounded-xl bg-white/5 border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-all"
+                      >
+                        {article.urlToImage && (
+                          <div className="aspect-[16/10] overflow-hidden">
+                            <img 
+                              src={article.urlToImage} 
+                              alt="" 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                        )}
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${getCategoryStyle(article.category || 'general')}`}>
+                              {article.category || 'General'}
+                            </span>
+                            <span className="text-xs text-white/40">{getReadingTime(article.content || article.description || '')} min</span>
+                          </div>
+                          <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-white transition-colors">
+                            {article.title}
+                          </h3>
+                          <p className="text-xs text-white/60 mb-3 line-clamp-2">
+                            {article.description}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-white/40">{article.source?.name}</span>
+                            <span className="text-xs text-white/40">{new Date(article.publishedAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </motion.article>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             
             {/* Sidebar */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               <AIRecommendations 
                 userInterests={['technology', 'world', 'business']}
                 readingHistory={bookmarkedArticles.map(a => a.title)}
@@ -775,7 +864,7 @@ export default function HomePageClient() {
         <AnimatePresence>
           {(tldrMode || speedReadMode || zenMode) && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="border-b border-white/5 bg-white/[0.02]">
-              <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+              <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {tldrMode && <Zap className="w-4 h-4 text-cyan-400" />}
                   {speedReadMode && <Clock className="w-4 h-4 text-purple-400" />}
@@ -787,107 +876,6 @@ export default function HomePageClient() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Articles Grid */}
-        <section className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold">Latest Stories</h2>
-              <p className="text-sm text-white/40 mt-1">{articles.length} articles • Updated {lastRefresh ? new Date(lastRefresh).toLocaleTimeString() : '—'}</p>
-            </div>
-            <div className="hidden md:flex items-center gap-2">
-              <button onClick={() => { setTldrMode(!tldrMode); setSpeedReadMode(false); setZenMode(false); }} className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${tldrMode ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>TLDR</button>
-              <button onClick={() => { setSpeedReadMode(!speedReadMode); setTldrMode(false); setZenMode(false); }} className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${speedReadMode ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>Speed</button>
-              <button onClick={() => { setZenMode(!zenMode); setTldrMode(false); setSpeedReadMode(false); }} className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${zenMode ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'border border-white/10 text-white/60 hover:border-white/20'}`}>Zen</button>
-            </div>
-          </div>
-
-          {loading && articles.length === 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="rounded-2xl bg-white/5 border border-white/5 overflow-hidden">
-                  <div className="aspect-[16/10] bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-shimmer bg-[length:200%_100%]" />
-                  <div className="p-6 space-y-3">
-                    <div className="flex justify-between">
-                      <div className="h-3 bg-white/5 rounded w-1/4 animate-pulse" />
-                      <div className="h-3 bg-white/5 rounded w-1/6 animate-pulse" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-5 bg-white/5 rounded w-full animate-pulse" />
-                      <div className="h-5 bg-white/5 rounded w-3/4 animate-pulse" />
-                    </div>
-                    <div className="h-4 bg-white/5 rounded w-2/3 animate-pulse" />
-                    <div className="flex justify-between pt-2">
-                      <div className="flex gap-2">
-                        <div className="h-3 bg-white/5 rounded w-12 animate-pulse" />
-                        <div className="h-3 bg-white/5 rounded w-12 animate-pulse" />
-                      </div>
-                      <div className="h-3 bg-white/5 rounded w-16 animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-20">
-              <p className="text-white/40 mb-4">{error}</p>
-              <button onClick={refresh} className="px-6 py-3 bg-white text-black rounded-full font-medium hover:bg-white/90 transition-all">Try Again</button>
-            </div>
-          ) : (
-            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" initial="initial" animate="animate" variants={{ animate: { transition: { staggerChildren: 0.05 }}}}>
-              <AnimatePresence mode="popLayout">
-                {filteredArticles.slice(zenMode ? 0 : 1).map((article, index) => (
-                  <motion.article 
-                    key={article.url} 
-                    variants={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -20 }}} 
-                    layout 
-                    onMouseEnter={(e) => handleArticleHover(article, e)}
-                    onMouseMove={handleArticleMouseMove}
-                    onMouseLeave={() => setHoveredArticle(null)} 
-                    onClick={() => openArticle(article)} 
-                    className="group cursor-pointer rounded-2xl overflow-hidden bg-white/[0.03] border border-white/5 hover:border-white/20 hover:bg-white/[0.05] transition-all duration-300"
-                  >
-                    {article.urlToImage && (
-                      <div className="aspect-[16/10] overflow-hidden relative">
-                        <img src={article.urlToImage} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      </div>
-                    )}
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs font-semibold text-white/50">{article.source?.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-white/30 flex items-center gap-1"><Clock className="w-3 h-3" />{getReadingTime(article.content || article.description || '')} min</span>
-                          <span className="text-xs text-white/30">{new Date(article.publishedAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-lg mb-3 line-clamp-2 group-hover:text-white/80 transition-colors leading-snug">{article.title}</h3>
-                      {!tldrMode && <p className="text-sm text-white/40 line-clamp-2 mb-4 leading-relaxed">{article.description}</p>}
-                      <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1.5 text-xs text-white/30"><Eye className="w-3.5 h-3.5" />{article.viewCount || Math.floor(Math.random() * 500 + 100)}</span>
-                          <span className="flex items-center gap-1.5 text-xs text-white/30"><ThumbsUp className="w-3.5 h-3.5" />{article.likeCount || Math.floor(Math.random() * 50 + 10)}</span>
-                          <span className="flex items-center gap-1.5 text-xs text-white/30"><MessageCircle className="w-3.5 h-3.5" />{Math.floor(Math.random() * 20 + 5)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button onClick={(e) => toggleBookmark(article, e)} className={`p-2 rounded-lg transition-all ${isBookmarked(article) ? 'text-white bg-white/10' : 'text-white/30 hover:text-white hover:bg-white/5'}`}><Bookmark className="w-4 h-4" fill={isBookmarked(article) ? 'currentColor' : 'none'} /></button>
-                          <button onClick={(e) => handleShare(article, e)} className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all"><Share2 className="w-4 h-4" /></button>
-                          <ArrowUpRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.article>
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          )}
-
-          {displayedCount < articles.length && !zenMode && (
-            <div ref={loaderRef} className="flex justify-center py-12">
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setDisplayedCount(prev => prev + 12)} className="px-8 py-4 border border-white/20 rounded-full font-medium hover:bg-white/5 transition-all flex items-center gap-2">Load More<ArrowRight className="w-4 h-4" /></motion.button>
-            </div>
-          )}
-        </section>
       </main>
 
       {/* Bookmarks Panel */}

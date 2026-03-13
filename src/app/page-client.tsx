@@ -28,6 +28,7 @@ import NewsQuiz from '@/components/NewsQuiz'
 import SharePanel from '@/components/SharePanel'
 import LiveVideoSection from '@/components/LiveVideoSection'
 import NewsArchive from '@/components/NewsArchive'
+import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -65,6 +66,7 @@ export default function HomePageClient() {
   const [showSharePanel, setShowSharePanel] = useState(false)
   const [shareArticleData, setShareArticleData] = useState<any>(null)
   const [showTimeline, setShowTimeline] = useState(false)
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
   const loaderRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
   const { scrollYProgress } = useScroll()
@@ -160,6 +162,48 @@ export default function HomePageClient() {
       setTickerPaused(false)
     }
   }, [breakingNews])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      
+      if (e.key === '/') {
+        e.preventDefault()
+        setShowSearch(true)
+      } else if (e.key === 'b' || e.key === 'B') {
+        setShowBookmarks(prev => !prev)
+      } else if (e.key === 't' || e.key === 'T') {
+        cycleTheme()
+      } else if (e.key === 'r' || e.key === 'R') {
+        refresh()
+      } else if (e.key === 'z' || e.key === 'Z') {
+        setZenMode(prev => !prev)
+        setTldrMode(false)
+        setSpeedReadMode(false)
+      } else if (e.key === 's' || e.key === 'S') {
+        setSpeedReadMode(prev => !prev)
+        setTldrMode(false)
+        setZenMode(false)
+      } else if (e.key === 'd' || e.key === 'D') {
+        setShowDailyDigest(prev => !prev)
+      } else if (e.key === '?') {
+        setShowKeyboardShortcuts(prev => !prev)
+      } else if (e.key === 'Escape') {
+        setShowSearch(false)
+        setShowBookmarks(false)
+        setShowShare(false)
+        setShowArticle(false)
+        setShowDailyDigest(false)
+        setShowHelp(false)
+        setShowVoiceSearch(false)
+        setShowKeyboardShortcuts(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [refresh])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -969,6 +1013,12 @@ export default function HomePageClient() {
           />
         )}
       </AnimatePresence>
+
+      {/* Keyboard Shortcuts */}
+      <KeyboardShortcuts 
+        isOpen={showKeyboardShortcuts} 
+        onClose={() => setShowKeyboardShortcuts(false)} 
+      />
     </div>
   )
 }

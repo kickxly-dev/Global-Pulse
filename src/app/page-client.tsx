@@ -15,6 +15,7 @@ import { useTheme } from '@/hooks/useTheme'
 import ModernArticleView from '@/components/ModernArticleView'
 import ShareModal from '@/components/ShareModal'
 import DailyDigest from '@/components/DailyDigest'
+import WorldMap from '@/components/WorldMap'
 
 export default function HomePageClient() {
   const [selectedCategory, setSelectedCategory] = useState('general')
@@ -478,6 +479,13 @@ export default function HomePageClient() {
                 ))}
               </div>
             </div>
+          </section>
+        )}
+
+        {/* World Map */}
+        {!zenMode && (
+          <section className="max-w-7xl mx-auto px-6 py-8">
+            <WorldMap />
           </section>
         )}
 

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 import { Toaster } from 'sonner'
 import AuthProvider from '@/components/AuthProvider'
+import DbInit from '@/components/DbInit'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -37,6 +38,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.className} bg-cyber-darker text-gray-100 min-h-screen`}>
+        <DbInit />
         <AuthProvider>
           {children}
         </AuthProvider>

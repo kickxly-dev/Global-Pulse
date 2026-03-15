@@ -82,7 +82,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error storing article:', error)
-    return NextResponse.json({ error: 'Failed to store article' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: 'Failed to store article', details: errorMessage }, { status: 500 })
   }
 }
 
@@ -93,6 +94,9 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '100')
 
   try {
+    // Ensure table exists first
+    await ensureTableExists()
+    
     let query = `
       SELECT 
         id,
@@ -132,7 +136,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching training data:', error)
-    return NextResponse.json({ error: 'Failed to fetch training data' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: 'Failed to fetch training data', details: errorMessage }, { status: 500 })
   }
 }
 

@@ -16,6 +16,9 @@ function getOpenAI() {
 // Store news article for AI training
 export async function POST(request: NextRequest) {
   try {
+    // Ensure table exists first
+    await ensureTableExists()
+    
     const body = await request.json()
     const { article } = body
 
@@ -133,7 +136,33 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Extract keywords from article
+// Ensure news_articles table exists
+async function ensureTableExists() {
+  try {
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS news_articles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        title TEXT NOT NULL,
+        description TEXT,
+        content TEXT,
+        url TEXT UNIQUE NOT NULL,
+        image_url TEXT,
+        source TEXT,
+        category TEXT,
+        published_at TIMESTAMP WITH TIME ZONE,
+        sentiment TEXT,
+        keywords JSONB,
+        embedding JSONB,
+        training_data JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `)
+  } catch (error) {
+    console.error('Error creating table:', error)
+    throw error
+  }
+}
 function extractKeywords(article: any): string[] {
   const text = `${article.title} ${article.description}`.toLowerCase()
   const words = text.split(/\s+/).filter(w => w.length > 3)

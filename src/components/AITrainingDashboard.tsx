@@ -64,24 +64,58 @@ export default function AITrainingDashboard() {
 
   const collectNewsForTraining = async () => {
     try {
-      // Fetch current news and store for training
+      // First check if we can connect to the database
+      const checkResponse = await fetch('/api/ai-training/stats')
+      if (!checkResponse.ok) {
+        alert('Database not initialized. Please run database setup first.')
+        return
+      }
+
+      // Fetch current news
       const newsResponse = await fetch('/api/news')
       const newsData = await newsResponse.json()
       
-      if (newsData.articles) {
-        for (const article of newsData.articles.slice(0, 20)) {
-          await fetch('/api/ai-training', {
+      if (!newsData.articles || newsData.articles.length === 0) {
+        alert('No news articles available to collect')
+        return
+      }
+
+      let successCount = 0
+      let failCount = 0
+      const errors: string[] = []
+
+      // Store articles one by one with proper error handling
+      for (const article of newsData.articles.slice(0, 20)) {
+        try {
+          const response = await fetch('/api/ai-training', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ article })
           })
+          
+          if (response.ok) {
+            successCount++
+          } else {
+            failCount++
+            const errorData = await response.json().catch(() => ({}))
+            if (errorData.error) errors.push(errorData.error)
+          }
+        } catch (err) {
+          failCount++
+          errors.push(err instanceof Error ? err.message : 'Unknown error')
         }
-        
-        await fetchRecentArticles()
-        alert(`Collected ${newsData.articles.length} articles for AI training`)
+      }
+      
+      await fetchRecentArticles()
+      
+      if (successCount > 0) {
+        alert(`Successfully collected ${successCount} articles for AI training${failCount > 0 ? ` (${failCount} failed)` : ''}`)
+      } else {
+        alert(`Failed to collect articles. ${errors[0] || 'Check console for details.'}`)
       }
     } catch (error) {
       console.error('Error collecting news:', error)
+      alert('Error collecting news: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 

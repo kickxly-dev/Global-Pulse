@@ -147,7 +147,42 @@ export async function GET() {
       console.log('✓ Sample user created')
     }
 
-    console.log('Database initialization completed successfully!')
+    // Create news_articles table for AI training
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS news_articles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        title TEXT NOT NULL,
+        description TEXT,
+        content TEXT,
+        url TEXT UNIQUE NOT NULL,
+        image_url TEXT,
+        source TEXT,
+        category TEXT,
+        published_at TIMESTAMP WITH TIME ZONE,
+        sentiment TEXT,
+        keywords JSONB,
+        embedding JSONB,
+        training_data JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `)
+    console.log('✓ news_articles table created')
+
+    // Create ai_model_training table
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS ai_model_training (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        model_version TEXT NOT NULL,
+        training_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        article_count INTEGER DEFAULT 0,
+        categories JSONB,
+        accuracy_score DECIMAL(4,3) DEFAULT 0.000,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `)
+    console.log('✓ ai_model_training table created')
 
     return NextResponse.json({
       success: true,
@@ -158,7 +193,9 @@ export async function GET() {
         'user_achievements',
         'daily_challenges',
         'user_challenges',
-        'article_interactions'
+        'article_interactions',
+        'news_articles',
+        'ai_model_training'
       ]
     })
 

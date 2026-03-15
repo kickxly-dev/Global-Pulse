@@ -32,6 +32,7 @@ import SentimentDashboard from '@/components/SentimentDashboard'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import LoadingState, { SkeletonLoader } from '@/components/LoadingState'
 import EnhancedGamification from '@/components/EnhancedGamification'
+import AITrainingDashboard from '@/components/AITrainingDashboard'
 import CollaborativeCuration from '@/components/CollaborativeCuration'
 import NewsComparison from '@/components/NewsComparison'
 import AudioSummary from '@/components/AudioSummary'
@@ -874,6 +875,7 @@ export default function HomePageClient() {
             
             {/* Sidebar */}
             <div className="space-y-3">
+              <AITrainingDashboard />
               <AIRecommendations 
                 userInterests={['technology', 'world', 'business']}
                 readingHistory={bookmarkedArticles.map(a => a.title)}

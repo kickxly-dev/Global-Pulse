@@ -7,9 +7,11 @@ const pool = new Pool({
 })
 
 // Test connection
-pool.on('error', (err) => {
+pool.on('error', (err: Error) => {
   console.error('Unexpected database error:', err)
 })
+
+console.log('Database pool initialized - RENDER_DATABASE_URL:', process.env.RENDER_DATABASE_URL ? 'SET' : 'NOT SET')
 
 export async function queryDatabase(query: string, params: any[] = []) {
   try {
